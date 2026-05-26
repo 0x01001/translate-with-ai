@@ -15,6 +15,12 @@
     <Authors>The One Line</Authors>
     <AssemblyTitle>ReWrite</AssemblyTitle>
     <ApplicationIcon>ui\logo.ico</ApplicationIcon>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>embedded</DebugType>
 
     <Version>0.0.$([System.DateTime]::Now.ToString("yyMMdd"))</Version>
 
@@ -46,9 +52,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="ui\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </None>
+    <EmbeddedResource Include="ui\**\*" />
   </ItemGroup>
 </Project>

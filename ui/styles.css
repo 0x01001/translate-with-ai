@@ -7,7 +7,7 @@
     --text-secondary: #9CA3AF;
     --accent-indigo: #6366F1;
     --accent-pink: #EC4899;
-    --accent-glow: linear-gradient(135deg, #6366F1, #EC4899);
+    --accent-glow: #982598;
     --diff-del-bg: rgba(239, 68, 68, 0.15);
     --diff-del-border: rgba(239, 68, 68, 0.3);
     --diff-del-text: #F87171;
@@ -25,7 +25,7 @@
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
     color: var(--text-primary);
     background: transparent; /* WPF border is transparent */
     overflow: hidden;
@@ -71,11 +71,12 @@ body {
 }
 
 .logo h1 {
-    font-family: 'Outfit', sans-serif;
+    font-family: "Segoe UI Variable Display", "Segoe UI", sans-serif;
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 0.5px;
     background: linear-gradient(135deg, #FFF, #D1D5DB);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -356,7 +357,7 @@ margin-top: 10px;
 }
 
 .settings-container h2 {
-    font-family: 'Outfit', sans-serif;
+    font-family: "Segoe UI Variable Display", "Segoe UI", sans-serif;
     font-size: 14px;
     font-weight: 600;
     margin-bottom: 2px;
@@ -511,7 +512,7 @@ body:not(.settings-only) #tab-settings {
 
 .action-btn.primary:hover {
     opacity: 0.95;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.45);
+    box-shadow: 0 4px 12px rgba(177, 99, 241, 0.45);
 }
 
 .action-btn.primary:active {
@@ -641,7 +642,7 @@ body:not(.settings-only) #tab-settings {
 .result-text-area {
     width: 100%;
     flex-grow: 1;
-    background: rgba(255, 255, 255, 0.02);
+    background: rgb(15, 17, 21);
     border: 1px solid var(--border-glass);
     border-radius: 8px;
     padding: 10px 14px;
@@ -816,26 +817,120 @@ body:not(.settings-only) #tab-settings {
     50% { opacity: 1; }
 }
 
-.stream-loading-dots {
-    display: inline-flex;
-    gap: 4px;
+/* PANEL */
+.result-panel {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* glow ring */
+.result-panel.loading::before {
+    content: "";
+
+    position: absolute;
+
+    width: 220%;
+    height: 220%;
+
+    left: -60%;
+    top: -60%;
+
+    background:
+        conic-gradient(
+            from 0deg,
+            transparent 0deg,
+            transparent 300deg,
+            rgba(99, 102, 241, 0.9) 330deg,
+            rgba(236, 72, 153, 1) 350deg,
+            transparent 360deg
+        );
+
+    animation: borderSpin 2s linear infinite;
+
+    z-index: 1;
+}
+
+/* inner mask */
+.result-panel.loading::after {
+    content: "";
+
+    position: absolute;
+    inset: 1.5px;
+
+    border-radius: 8.5px;
+
+    background: rgba(20, 20, 24, 0.96);
+
+    z-index: 2;
+}
+
+/* content above mask */
+.result-panel > * {
+    position: relative;
+    z-index: 3;
+}
+
+@keyframes borderSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Center loading placeholder */
+.result-text-area.loading-placeholder {
+    display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px;
+    text-align: center;
+
+    min-height: 150px;
+
+    color: var(--text-secondary);
+}
+
+.stream-loading-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    font-size: 12px;
+    font-weight: 500;
 }
 
 .stream-dot {
-    width: 5px;
-    height: 5px;
-    background-color: var(--text-secondary);
-    border-radius: 50%;
-    animation: dotBounce 1.4s infinite ease-in-out both;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #fff;
+
+    animation: streamBounce 1.2s infinite ease-in-out;
 }
 
-.stream-dot:nth-child(1) { animation-delay: -0.32s; }
-.stream-dot:nth-child(2) { animation-delay: -0.16s; }
+.stream-dot:nth-child(2) {
+    animation-delay: 0.15s;
+}
 
-@keyframes dotBounce {
-    0%, 80%, 100% { transform: scale(0); }
-    40% { transform: scale(1.0); }
+.stream-dot:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.stream-dot:nth-child(4) {
+    animation-delay: 0.45s;
+}
+
+@keyframes streamBounce {
+    0%, 80%, 100% {
+        transform: scale(0.6);
+        opacity: 0.4;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }

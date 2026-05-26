@@ -14,6 +14,7 @@ namespace ReWrite
             InitializeComponent();
 
             Icon = MainWindow.LoadWindowIcon();
+            LogoImage.Source = EmbeddedUiContent.LoadImageSource("logo.png");
 
             Loaded += WelcomeWindow_Loaded;
         }

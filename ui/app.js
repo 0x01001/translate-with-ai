@@ -203,27 +203,50 @@ function watchPopupResize() {
 }
 
 // Load Settings from LocalStorage
-function loadSettings() {
-    const saved = localStorage.getItem("rewrite_settings") || localStorage.getItem("ai_portal_settings");
+function refreshAppSettings() {
+
+    // Reload localStorage settings
+    const saved =
+        localStorage.getItem("rewrite_settings") ||
+        localStorage.getItem("ai_portal_settings");
+
     if (saved) {
         try {
-            settings = { ...settings, ...JSON.parse(saved) };
+            settings = {
+                ...settings,
+                ...JSON.parse(saved)
+            };
         } catch (e) {
             console.error("Failed to parse settings", e);
         }
     }
-    
-    // Fill Settings inputs
-    document.getElementById("gemini-key").value = settings.geminiKey;
-    document.getElementById("gemini-model").value = settings.geminiModel;
-    document.getElementById("openai-key").value = settings.openaiKey;
-    document.getElementById("openai-model").value = settings.openaiModel;
-    document.getElementById("active-provider").value = settings.activeProvider;
-    
-    // Ask C# for startup status
+
+    // Sync UI from settings
+    document.getElementById("gemini-key").value =
+        settings.geminiKey || "";
+
+    document.getElementById("gemini-model").value =
+        settings.geminiModel || "";
+
+    document.getElementById("openai-key").value =
+        settings.openaiKey || "";
+
+    document.getElementById("openai-model").value =
+        settings.openaiModel || "";
+
+    document.getElementById("active-provider").value =
+        settings.activeProvider || "gemini";
+
+    // Ask C# runtime states again
     if (window.chrome && window.chrome.webview) {
-        window.chrome.webview.postMessage({ action: "get_startup" });
-        window.chrome.webview.postMessage({ action: "get_hotkey" });
+
+        window.chrome.webview.postMessage({
+            action: "get_startup"
+        });
+
+        window.chrome.webview.postMessage({
+            action: "get_hotkey"
+        });
     }
 }
 
@@ -408,13 +431,19 @@ document.getElementById("btn-retry").addEventListener("click", startAIProcess);
 
 async function startAIProcess() {
     // Show loading
+    refreshAppSettings();
     resultContainer.style.display = "flex";
     triggerSection.style.display = "none";
     requestPopupResize();
-    
+
+    const resultPanel = document.querySelector(".result-panel");
+
+    resultPanel.classList.add("loading");
+    aiOutput.classList.add("loading-placeholder");
+
     aiOutput.innerHTML = `
         <div class="stream-loading-dots">
-            <span>Đang viết, chờ xíu✍️</span>
+            <span>Đang viết, chờ xíu ✍️</span>
             <span class="stream-dot"></span>
             <span class="stream-dot"></span>
             <span class="stream-dot"></span>
@@ -696,14 +725,20 @@ async function streamOpenAI(prompt) {
 }
 
 function renderStreamingText(text, isFinished = false) {
+    const resultPanel = document.querySelector(".result-panel");
+
+    resultPanel.classList.remove("loading");
+    aiOutput.classList.remove("loading-placeholder");
+
     let formatted = escapeHtml(text);
     formatted = formatted.replace(/\n/g, "<br>");
-    
+
     if (isFinished) {
         aiOutput.innerHTML = formatted;
     } else {
         aiOutput.innerHTML = formatted + '<span class="stream-cursor"></span>';
     }
+
     aiOutput.scrollTop = aiOutput.scrollHeight;
 }
 
@@ -891,7 +926,7 @@ function computeLcsDiff(oldList, newList) {
 
 // Initialize on document ready
 document.addEventListener("DOMContentLoaded", () => {
-    loadSettings();
+    refreshAppSettings();
     renderHistory();
 
     // --- KHU VỰC CHỐNG ZOOM & ZOOM DEFAULT THEO MÀN HÌNH ---

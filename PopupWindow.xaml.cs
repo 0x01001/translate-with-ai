@@ -57,20 +57,7 @@ namespace ReWrite
                 // webView.CoreWebView2.OpenDevToolsWindow();
                 webView.DefaultBackgroundColor = System.Drawing.Color.FromArgb(15, 17, 21); // Match #0F1115 dark theme
 
-                // Set virtual host mapping
-                string contentFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ui");
-                
-                // Ensure the ui folder exists so that the mapping doesn't fail
-                if (!Directory.Exists(contentFolder))
-                {
-                    Directory.CreateDirectory(contentFolder);
-                }
-
-                webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
-                    "rewrite.local",
-                    contentFolder,
-                    Microsoft.Web.WebView2.Core.CoreWebView2HostResourceAccessKind.Allow
-                );
+                EmbeddedUiContent.ConfigureWebView(webView.CoreWebView2);
 
                 if (LoadingOverlay != null)
                 {

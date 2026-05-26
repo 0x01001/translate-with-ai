@@ -31,9 +31,9 @@
             <StackPanel VerticalAlignment="Center"
                         HorizontalAlignment="Center">
 
-                <Image Width="72"
+                <Image x:Name="LogoImage"
+                    Width="72"
                     Height="72"
-                    Source="pack://siteoforigin:,,,/ui/logo.png"
                     Margin="0,0,0,12" />
 
                 <TextBlock Text="ReWrite"

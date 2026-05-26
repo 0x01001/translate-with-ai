@@ -45,17 +45,7 @@ namespace ReWrite
                 await webView.EnsureCoreWebView2Async(env);
                 webView.DefaultBackgroundColor = System.Drawing.Color.FromArgb(15, 17, 21);
 
-                string contentFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ui");
-                if (!Directory.Exists(contentFolder))
-                {
-                    Directory.CreateDirectory(contentFolder);
-                }
-
-                webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
-                    "rewrite.local",
-                    contentFolder,
-                    Microsoft.Web.WebView2.Core.CoreWebView2HostResourceAccessKind.Allow
-                );
+                EmbeddedUiContent.ConfigureWebView(webView.CoreWebView2);
 
                 if (LoadingOverlay != null)
                 {

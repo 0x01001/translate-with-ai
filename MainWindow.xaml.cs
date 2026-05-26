@@ -72,15 +72,7 @@ namespace ReWrite
         {
             try
             {
-                string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ui", "logo.ico");
-                if (!File.Exists(iconPath))
-                {
-                    return null;
-                }
-
-                return System.Windows.Media.Imaging.BitmapFrame.Create(
-                    new Uri(iconPath, UriKind.Absolute)
-                );
+                return EmbeddedUiContent.LoadImageSource("logo.ico");
             }
             catch
             {
@@ -283,11 +275,10 @@ namespace ReWrite
         {
             try
             {
-                string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ui", "logo.ico");
-                if (File.Exists(iconPath))
+                var icon = EmbeddedUiContent.LoadDrawingIcon("logo.ico");
+                if (icon != null)
                 {
-                    using var trayIcon = new System.Drawing.Icon(iconPath);
-                    return (System.Drawing.Icon)trayIcon.Clone();
+                    return icon;
                 }
 
                 return System.Drawing.SystemIcons.Application;
