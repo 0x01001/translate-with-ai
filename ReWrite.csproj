@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <AssemblyName>ReWrite</AssemblyName>
+    <RootNamespace>ReWrite</RootNamespace>
+    <Product>ReWrite</Product>
+    <Company>The One Line</Company>
+    <Authors>The One Line</Authors>
+    <AssemblyTitle>ReWrite</AssemblyTitle>
+    <ApplicationIcon>ui\logo.ico</ApplicationIcon>
+
+    <Version>1.0.$([System.DateTime]::Now.ToString("yyMMdd"))</Version>
+
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+
+    <FileVersion>1.0.$([System.DateTime]::Now.DayOfYear).$([System.DateTime]::Now.Minute)</FileVersion>
+
+    <InformationalVersion>build-$([System.DateTime]::Now.ToString("yyyyMMddHHmmss"))</InformationalVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3967.48" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Include="App.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="MainWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="PopupWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="SettingsWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="App.xaml.cs" DependentUpon="App.xaml" />
+    <Compile Update="MainWindow.xaml.cs" DependentUpon="MainWindow.xaml" />
+    <Compile Update="PopupWindow.xaml.cs" DependentUpon="PopupWindow.xaml" />
+    <Compile Update="SettingsWindow.xaml.cs" DependentUpon="SettingsWindow.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="ui\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+</Project>

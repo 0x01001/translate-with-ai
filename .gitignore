@@ -1,0 +1,46 @@
+/.vs/
+/bin/
+/obj/
+**/bin/
+**/obj/
+
+# Visual Studio and IDE
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vscode/
+.idea/
+
+# NuGet and packages
+packages/
+.nuget/
+*.nupkg
+
+# Build artifacts
+bin/Debug/
+bin/Release/
+publish/
+*.log
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Sensitive files / user secrets
+secrets.json
+*.pfx
+*.p12
+*.pem
+*.key
+*.cert
+.env
+.env.*
+*.publishsettings
+*.credentials
+
+# Misc
+*.db
+*.cache
