@@ -13,5 +13,16 @@
     <Grid>
         <!-- WebView2 Web Control -->
         <wv2:WebView2 Name="webViewControl" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+
+        <!-- WPF loading overlay to avoid blank WebView2 flash -->
+        <Border x:Name="LoadingOverlay" Background="#0F1115">
+            <Grid>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock Text="Dang tai giao dien..." FontSize="12" Foreground="#9CA3AF" HorizontalAlignment="Center" />
+                    <ProgressBar Height="6" Width="180" Margin="0,10,0,0" IsIndeterminate="True"
+                                 Foreground="#EC4899" Background="#1B1F27" />
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

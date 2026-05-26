@@ -23,6 +23,12 @@ namespace ReWrite
             webView = (Microsoft.Web.WebView2.Wpf.WebView2)FindName("webViewControl");
             _parent = parent;
 
+            if (LoadingOverlay != null)
+            {
+                LoadingOverlay.Visibility = Visibility.Visible;
+            }
+            webView.Visibility = Visibility.Hidden;
+
             this.LocationChanged += (s, e) => ClampToScreen();
 
             // Register Escape key to hide the window
@@ -66,6 +72,11 @@ namespace ReWrite
                     Microsoft.Web.WebView2.Core.CoreWebView2HostResourceAccessKind.Allow
                 );
 
+                if (LoadingOverlay != null)
+                {
+                    LoadingOverlay.Visibility = Visibility.Visible;
+                }
+
                 webView.Source = new Uri("https://rewrite.local/index.html");
                 webView.WebMessageReceived += WebView_WebMessageReceived;
 
@@ -83,6 +94,15 @@ namespace ReWrite
             {
                 System.Windows.MessageBox.Show($"Failed to initialize WebView2: {ex.Message}\nMake sure Edge WebView2 Runtime is installed.", "ReWrite Initialization Error");
             }
+        }
+
+        private void HideLoadingOverlay()
+        {
+            if (LoadingOverlay != null)
+            {
+                LoadingOverlay.Visibility = Visibility.Collapsed;
+            }
+            webView.Visibility = Visibility.Visible;
         }
 
         public void PrepareShow(string selectedText, IntPtr targetHwnd, bool openSettingsDirectly = false)
@@ -128,6 +148,11 @@ namespace ReWrite
                 using JsonDocument doc = JsonDocument.Parse(json);
                 string action = doc.RootElement.GetProperty("action").GetString() ?? "";
 
+                if (action == "ui_ready")
+                {
+                    HideLoadingOverlay();
+                    return;
+                }
                 if (action == "paste")
                 {
                     string text = doc.RootElement.GetProperty("text").GetString() ?? "";
@@ -171,6 +196,11 @@ namespace ReWrite
                     if (enabled) StartupManager.EnableAutostart();
                     else StartupManager.DisableAutostart();
                     SendStartupStatus();
+                }
+                else if (action == "resize_popup")
+                {
+                    double height = doc.RootElement.GetProperty("height").GetDouble();
+                    ResizePopup(height);
                 }
             }
             catch (Exception ex)
@@ -316,6 +346,22 @@ namespace ReWrite
 
             this.Left = left;
             this.Top = top;
+        }
+
+        private void ResizePopup(double height)
+        {
+            if (height < 240)
+            {
+                height = 240;
+            }
+
+            if (Math.Abs(Height - height) < 1)
+            {
+                return;
+            }
+
+            Height = height;
+            ClampToScreen();
         }
 
         protected override void OnSourceInitialized(EventArgs e)

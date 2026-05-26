@@ -17,6 +17,12 @@ namespace ReWrite
             Icon = MainWindow.LoadWindowIcon();
             _parent = parent;
 
+            if (LoadingOverlay != null)
+            {
+                LoadingOverlay.Visibility = Visibility.Visible;
+            }
+            webView.Visibility = Visibility.Hidden;
+
             this.PreviewKeyDown += (s, e) =>
             {
                 if (e.Key == System.Windows.Input.Key.Escape)
@@ -51,6 +57,11 @@ namespace ReWrite
                     Microsoft.Web.WebView2.Core.CoreWebView2HostResourceAccessKind.Allow
                 );
 
+                if (LoadingOverlay != null)
+                {
+                    LoadingOverlay.Visibility = Visibility.Visible;
+                }
+
                 webView.Source = new Uri("https://rewrite.local/index.html?mode=settings");
                 webView.WebMessageReceived += WebView_WebMessageReceived;
 
@@ -66,6 +77,15 @@ namespace ReWrite
             {
                 System.Windows.MessageBox.Show($"Failed to initialize WebView2: {ex.Message}\nMake sure Edge WebView2 Runtime is installed.", "ReWrite Initialization Error");
             }
+        }
+
+        private void HideLoadingOverlay()
+        {
+            if (LoadingOverlay != null)
+            {
+                LoadingOverlay.Visibility = Visibility.Collapsed;
+            }
+            webView.Visibility = Visibility.Visible;
         }
 
         public void ShowSettings()
@@ -113,6 +133,11 @@ namespace ReWrite
                 using JsonDocument doc = JsonDocument.Parse(json);
                 string action = doc.RootElement.GetProperty("action").GetString() ?? "";
 
+                if (action == "ui_ready")
+                {
+                    HideLoadingOverlay();
+                    return;
+                }
                 if (action == "get_startup")
                 {
                     SendStartupStatus();

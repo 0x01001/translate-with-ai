@@ -11,5 +11,15 @@
 
     <Grid>
         <wv2:WebView2 Name="webView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+
+        <Border x:Name="LoadingOverlay" Background="#0F1115">
+            <Grid>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock Text="Dang tai giao dien..." FontSize="12" Foreground="#9CA3AF" HorizontalAlignment="Center" />
+                    <ProgressBar Height="6" Width="200" Margin="0,10,0,0" IsIndeterminate="True"
+                                 Foreground="#EC4899" Background="#1B1F27" />
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

@@ -5,6 +5,8 @@ let lastActiveTextTab = "rewrite";
 let aiResult = "";
 let activeTargetHwnd = null;
 let currentHotkeyText = "Ctrl+Shift+A";
+let historyItems = [];
+let lastRequestMeta = null;
 
 // Settings default structure
 let settings = {
@@ -22,7 +24,6 @@ const tabPanes = document.querySelectorAll(".tab-pane");
 const sourcePreview = document.getElementById("source-preview");
 const translateSourcePreview = document.getElementById("translate-source-preview");
 const sourceBubbleWrapper = document.getElementById("source-bubble-wrapper");
-const promptInput = document.getElementById("prompt-input");
 const resultContainer = document.getElementById("result-container");
 const triggerSection = document.getElementById("trigger-section");
 const aiOutput = document.getElementById("ai-output");
@@ -34,6 +35,26 @@ const diffOutputWrapper = document.getElementById("diff-output-wrapper");
 const appHeader = document.querySelector(".app-header");
 const hotkeyInput = document.getElementById("hotkey-input");
 const hotkeyError = document.getElementById("hotkey-error");
+const resultMeta = document.getElementById("result-meta");
+const btnCopyResult = document.getElementById("btn-copy-result");
+const historyList = document.getElementById("history-list");
+const historyEmpty = document.getElementById("history-empty");
+const btnClearHistory = document.getElementById("btn-clear-history");
+
+let resizeAnimationFrame = null;
+let popupResizeObserver = null;
+
+function getTabElement(tabId, suffix) {
+    return document.getElementById(`${tabId}-${suffix}`);
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+    if (window.chrome && window.chrome.webview) {
+        window.chrome.webview.postMessage({ action: "ui_ready" });
+    }
+    watchPopupResize();
+    requestPopupResize();
+});
 
 function getHotkeyHint() {
     return currentHotkeyText ? `nhấn ${currentHotkeyText}` : "nhấn phím tắt";
@@ -41,6 +62,144 @@ function getHotkeyHint() {
 
 function buildEmptyText() {
     return `Chưa chọn văn bản nào... Hãy bôi đen văn bản ngoài màn hình và ${getHotkeyHint()}.`;
+}
+
+function escapeHtml(text) {
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+function formatTime(date) {
+    return date.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+}
+
+function getTabLabel(tab, targetLang) {
+    if (tab === "rewrite") return "Viết lại";
+    if (tab === "write") return "Soạn thảo";
+    if (tab === "translate") return targetLang ? `Dịch sang ${targetLang}` : "Dịch thuật";
+    return "Kết quả";
+}
+
+function updateResultMeta(isLoading = false) {
+    if (!resultMeta) return;
+    const label = lastRequestMeta ? getTabLabel(lastRequestMeta.tab, lastRequestMeta.targetLang) : "Kết quả";
+    if (isLoading) {
+        resultMeta.textContent = `${label} • Đang tạo...`;
+        return;
+    }
+    resultMeta.textContent = `${label} • ${formatTime(new Date())}`;
+}
+
+async function copyText(text) {
+    if (!text) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+            await navigator.clipboard.writeText(text);
+            return;
+        } catch (e) {
+            console.warn("Clipboard API failed, falling back", e);
+        }
+    }
+
+    const temp = document.createElement("textarea");
+    temp.value = text;
+    temp.setAttribute("readonly", "");
+    temp.style.position = "absolute";
+    temp.style.left = "-9999px";
+    document.body.appendChild(temp);
+    temp.select();
+    document.execCommand("copy");
+    document.body.removeChild(temp);
+}
+
+function addHistoryItem() {
+    if (!aiResult.trim() || !lastRequestMeta) return;
+    const item = {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        text: aiResult.trim(),
+        tab: lastRequestMeta.tab,
+        targetLang: lastRequestMeta.targetLang || "",
+        time: new Date()
+    };
+    historyItems.unshift(item);
+    renderHistory();
+}
+
+function renderHistory() {
+    if (!historyList || !historyEmpty) return;
+    historyList.innerHTML = "";
+
+    if (!historyItems.length) {
+        historyEmpty.style.display = "block";
+        historyList.appendChild(historyEmpty);
+        return;
+    }
+
+    historyEmpty.style.display = "none";
+    historyItems.forEach(item => {
+        const entry = document.createElement("div");
+        entry.className = "history-item";
+        const label = getTabLabel(item.tab, item.targetLang);
+        const time = formatTime(item.time);
+        const safeText = escapeHtml(item.text).replace(/\n/g, "<br>");
+        entry.innerHTML = `
+            <div class="history-meta">
+                <span class="history-badge">${label}</span>
+                <span>${time}</span>
+            </div>
+            <div class="history-text">${safeText}</div>
+            <div class="history-actions">
+                <button class="result-action-btn" data-action="copy" data-id="${item.id}">Copy</button>
+            </div>
+        `;
+        historyList.appendChild(entry);
+    });
+}
+
+function measurePopupHeight() {
+    const appContainer = document.querySelector(".app-container");
+
+    if (!appContainer) {
+        return Math.ceil(document.documentElement.scrollHeight || document.body.scrollHeight || 0);
+    }
+
+    return Math.ceil(appContainer.getBoundingClientRect().height);
+}
+
+function requestPopupResize() {
+    if (!(window.chrome && window.chrome.webview)) {
+        return;
+    }
+
+    if (resizeAnimationFrame) {
+        cancelAnimationFrame(resizeAnimationFrame);
+    }
+
+    resizeAnimationFrame = requestAnimationFrame(() => {
+        resizeAnimationFrame = null;
+        window.chrome.webview.postMessage({
+            action: "resize_popup",
+            height: measurePopupHeight()
+        });
+    });
+}
+
+function watchPopupResize() {
+    const appContainer = document.querySelector(".app-container");
+    if (!appContainer || typeof ResizeObserver === "undefined") {
+        return;
+    }
+
+    if (popupResizeObserver) {
+        popupResizeObserver.disconnect();
+    }
+
+    popupResizeObserver = new ResizeObserver(() => {
+        requestPopupResize();
+    });
+    popupResizeObserver.observe(appContainer);
 }
 
 // Load Settings from LocalStorage
@@ -120,7 +279,7 @@ function switchTab(tabId) {
 
     // Active tab content panes
     tabPanes.forEach(pane => {
-        if (pane.id === `tab-${tabId}` || (tabId === "write" && pane.id === "tab-write-rewrite") || (tabId === "rewrite" && pane.id === "tab-write-rewrite")) {
+        if (pane.id === `tab-${tabId}`) {
             pane.classList.add("active");
         } else {
             pane.classList.remove("active");
@@ -128,18 +287,21 @@ function switchTab(tabId) {
     });
 
     // Hide/Show source bubble based on tab
-    if (tabId === "write") {
-        sourceBubbleWrapper.style.display = "none";
-        lastActiveTextTab = "write";
-    } else if (tabId === "rewrite") {
+    if (tabId === "rewrite") {
         sourceBubbleWrapper.style.display = "block";
         lastActiveTextTab = "rewrite";
+    } else if (tabId === "write") {
+        sourceBubbleWrapper.style.display = "none";
+        lastActiveTextTab = "write";
     } else if (tabId === "translate") {
         lastActiveTextTab = "translate";
     }
 
     // Hide result container if viewing settings
     if (tabId === "settings") {
+        resultContainer.style.display = "none";
+        triggerSection.style.display = "none";
+    } else if (tabId === "history") {
         resultContainer.style.display = "none";
         triggerSection.style.display = "none";
     } else {
@@ -152,6 +314,8 @@ function switchTab(tabId) {
             triggerSection.style.display = "block";
         }
     }
+
+    requestPopupResize();
 }
 
 // Register Tabs Listeners
@@ -177,6 +341,7 @@ if (window.chrome && window.chrome.webview) {
             resultContainer.style.display = "none";
             btnShowDiff.style.display = "none";
             switchResultTab("normal");
+            updateResultMeta(true);
             
             // Set text preview
             if (selectedText) {
@@ -201,8 +366,11 @@ if (window.chrome && window.chrome.webview) {
             if (data.settingsDirectly) {
                 switchTab("settings");
             } else {
-                promptInput.value = "";
-                promptInput.focus();
+                const activePromptInput = getTabElement(currentTab, "prompt-input");
+                if (activePromptInput) {
+                    activePromptInput.focus();
+                }
+                requestPopupResize();
             }
         } 
         else if (data.event === "startup_status") {
@@ -242,6 +410,7 @@ async function startAIProcess() {
     // Show loading
     resultContainer.style.display = "flex";
     triggerSection.style.display = "none";
+    requestPopupResize();
     
     aiOutput.innerHTML = `
         <div class="stream-loading-dots">
@@ -258,11 +427,21 @@ async function startAIProcess() {
     let prompt = "";
     const activeTab = currentTab === "settings" ? lastActiveTextTab : currentTab;
     
-    const tone = document.getElementById("param-tone").value;
-    const format = document.getElementById("param-format").value;
-    const length = document.getElementById("param-length").value;
-    const customPrompt = promptInput.value.trim();
+    const tone = getTabElement(activeTab, "param-tone")?.value || "";
+    const format = getTabElement(activeTab, "param-format")?.value || "";
+    const length = getTabElement(activeTab, "param-length")?.value || "";
+    const customPrompt = getTabElement(activeTab, "prompt-input")?.value.trim() || "";
     const targetLang = document.getElementById("param-lang").value;
+    lastRequestMeta = {
+        tab: activeTab,
+        tone,
+        format,
+        length,
+        prompt: customPrompt,
+        targetLang,
+        sourceText: selectedText
+    };
+    updateResultMeta(true);
     
     if (activeTab === "rewrite") {
         if (!selectedText) {
@@ -333,6 +512,9 @@ Hãy CHỈ trả về nội dung bản dịch trực tiếp. Giữ nguyên đị
         } else {
             btnShowDiff.style.display = "none";
         }
+
+        updateResultMeta(false);
+        addHistoryItem();
         
     } catch (error) {
         aiOutput.innerHTML = `<span style='color: #F87171;'>Lỗi kết nối API: ${error.message}<br>Vui lòng kiểm tra lại API Key hoặc tên Model trong mục Cài đặt.</span>`;
@@ -379,13 +561,11 @@ async function streamGemini(prompt) {
         buffer += decoder.decode(value, { stream: true });
         
         // Gemini stream chunks come as JSON array elements in one huge array: [ {...}, {...} ]
-        // Let's parse them iteratively by finding matching JSON objects inside the buffer
         let boundaryIndex;
         while ((boundaryIndex = findJsonEnd(buffer)) !== -1) {
             let jsonStr = buffer.substring(0, boundaryIndex).trim();
             buffer = buffer.substring(boundaryIndex);
             
-            // Clean up comma at start of chunk if it exists
             if (jsonStr.startsWith(",")) jsonStr = jsonStr.substring(1).trim();
             if (jsonStr.startsWith("[")) jsonStr = jsonStr.substring(1).trim();
             if (jsonStr.endsWith("]")) jsonStr = jsonStr.substring(0, jsonStr.length - 1).trim();
@@ -399,7 +579,6 @@ async function streamGemini(prompt) {
                         renderStreamingText(aiResult);
                     }
                 } catch (e) {
-                    // JSON chunk might be incomplete, let's append it back and wait for more data
                     buffer = jsonStr + buffer;
                     break;
                 }
@@ -407,7 +586,6 @@ async function streamGemini(prompt) {
         }
     }
     
-    // Process remaining buffer
     if (buffer.trim()) {
         try {
             let cleanStr = buffer.trim();
@@ -421,7 +599,7 @@ async function streamGemini(prompt) {
         } catch(e) {}
     }
     
-    renderStreamingText(aiResult, true); // Render final completed text without cursor
+    renderStreamingText(aiResult, true);
 }
 
 // Simple JSON boundary finder for streaming
@@ -432,30 +610,23 @@ function findJsonEnd(str) {
     
     for (let i = 0; i < str.length; i++) {
         const char = str[i];
-        
         if (escape) {
             escape = false;
             continue;
         }
-        
         if (char === "\\") {
             escape = true;
             continue;
         }
-        
         if (char === '"') {
             inString = !inString;
             continue;
         }
-        
         if (!inString) {
-            if (char === "{") {
-                depth++;
-            } else if (char === "}") {
+            if (char === "{") depth++;
+            else if (char === "}") {
                 depth--;
-                if (depth === 0) {
-                    return i + 1; // End of JSON object
-                }
+                if (depth === 0) return i + 1;
             }
         }
     }
@@ -500,14 +671,11 @@ async function streamOpenAI(prompt) {
         
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
-        
-        // Keep the last partial line in the buffer
         buffer = lines.pop();
         
         for (const line of lines) {
             const cleanLine = line.trim();
-            if (!cleanLine) continue;
-            if (cleanLine === "data: [DONE]") continue;
+            if (!cleanLine || cleanLine === "data: [DONE]") continue;
             
             if (cleanLine.startsWith("data: ")) {
                 try {
@@ -524,12 +692,11 @@ async function streamOpenAI(prompt) {
         }
     }
     
-    renderStreamingText(aiResult, true); // Render final completed text without cursor
+    renderStreamingText(aiResult, true);
 }
 
 function renderStreamingText(text, isFinished = false) {
-    // Format paragraph breaks elegantly as HTML
-    let formatted = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    let formatted = escapeHtml(text);
     formatted = formatted.replace(/\n/g, "<br>");
     
     if (isFinished) {
@@ -537,8 +704,6 @@ function renderStreamingText(text, isFinished = false) {
     } else {
         aiOutput.innerHTML = formatted + '<span class="stream-cursor"></span>';
     }
-    
-    // Auto-scroll output container as content flows in
     aiOutput.scrollTop = aiOutput.scrollHeight;
 }
 
@@ -580,13 +745,38 @@ function toggleButtonsDisabled(disabled) {
     document.getElementById("btn-retry").disabled = disabled;
     document.getElementById("btn-replace").disabled = disabled;
     tabs.forEach(btn => {
-        if (btn.getAttribute("data-tab") !== "settings") btn.disabled = disabled;
+        const tabId = btn.getAttribute("data-tab");
+        if (tabId && tabId !== "settings" && tabId !== "history") btn.disabled = disabled;
     });
 }
 
 // Result vs Diff Tab Toggle
 btnShowResult.addEventListener("click", () => switchResultTab("normal"));
 btnShowDiff.addEventListener("click", () => switchResultTab("diff"));
+if (btnCopyResult) {
+    btnCopyResult.addEventListener("click", () => {
+        if (aiResult) copyText(aiResult);
+    });
+}
+if (btnClearHistory) {
+    btnClearHistory.addEventListener("click", () => {
+        historyItems = [];
+        renderHistory();
+    });
+}
+if (historyList) {
+    historyList.addEventListener("click", event => {
+        const button = event.target.closest("button[data-action]");
+        if (!button) return;
+        const action = button.getAttribute("data-action");
+        const id = button.getAttribute("data-id");
+        const item = historyItems.find(entry => entry.id === id);
+        if (!item) return;
+        if (action === "copy") {
+            copyText(item.text);
+        }
+    });
+}
 
 function switchResultTab(tabName) {
     if (tabName === "normal") {
@@ -616,40 +806,32 @@ document.getElementById("btn-replace").addEventListener("click", () => {
 // Settings Save Trigger
 document.getElementById("save-settings-btn").addEventListener("click", saveSettings);
 
-
 // Premium LCS Word-by-Word Diff Algorithm
 function calculateAndRenderDiff() {
     if (!selectedText || !aiResult) return;
     
-    // Split into words while retaining spaces/newlines to make formatting beautiful
-    // Regex splits by word boundaries or whitespace
     const oldWords = selectedText.split(/(\s+)/);
     const newWords = aiResult.split(/(\s+)/);
     
-    // Filter empty values from splitting
     const oldFiltered = oldWords.filter(w => w !== "");
     const newFiltered = newWords.filter(w => w !== "");
     
     const diff = computeLcsDiff(oldFiltered, newFiltered);
     
-    // Render diff to HTML
     let html = "";
     diff.forEach(token => {
         const textEscaped = token.text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         if (token.type === "ins") {
             if (textEscaped.trim() === "") {
-                html += textEscaped; // don't bubble highlights on raw white spaces
+                html += textEscaped;
             } else {
                 html += `<span class="diff-ins">${textEscaped}</span>`;
             }
         } else if (token.type === "del") {
-            if (textEscaped.trim() === "") {
-                // do nothing for deleted white space
-            } else {
+            if (textEscaped.trim() !== "") {
                 html += `<span class="diff-del">${textEscaped}</span>`;
             }
         } else {
-            // Normal word
             if (textEscaped === "\n") {
                 html += "<br>";
             } else {
@@ -661,18 +843,13 @@ function calculateAndRenderDiff() {
     diffOutput.innerHTML = html;
 }
 
-// Longest Common Subsequence backtracking diff generator
 function computeLcsDiff(oldList, newList) {
     const m = oldList.length;
     const n = newList.length;
-    
-    // Create DP table
     const dp = Array(m + 1).fill(0).map(() => Array(n + 1).fill(0));
     
-    // Fill table
     for (let i = 1; i <= m; i++) {
         for (let j = 1; j <= n; j++) {
-            // Case-insensitive/strict whitespace compare
             const wordA = oldList[i - 1].trim().toLowerCase();
             const wordB = newList[j - 1].trim().toLowerCase();
             const isMatch = (wordA === wordB && wordA !== "") || (oldList[i-1] === newList[j-1]);
@@ -685,9 +862,7 @@ function computeLcsDiff(oldList, newList) {
         }
     }
     
-    // Backtrack to assemble diff tokens
-    let i = m;
-    let j = n;
+    let i = m, j = n;
     const result = [];
     
     while (i > 0 || j > 0) {
@@ -698,8 +873,7 @@ function computeLcsDiff(oldList, newList) {
             
             if (isMatch) {
                 result.unshift({ type: "normal", text: newList[j - 1] });
-                i--;
-                j--;
+                i--; j--;
                 continue;
             }
         }
@@ -712,23 +886,51 @@ function computeLcsDiff(oldList, newList) {
             i--;
         }
     }
-    
     return result;
 }
 
 // Initialize on document ready
 document.addEventListener("DOMContentLoaded", () => {
     loadSettings();
-    // Advanced options toggle
-    const advancedWrapper = document.querySelector(".advanced-options-wrapper");
-    const advancedToggleBtn = document.getElementById("advanced-toggle-btn");
+    renderHistory();
 
-    if (advancedWrapper && advancedToggleBtn) {
-        advancedToggleBtn.addEventListener("click", () => {
-            advancedWrapper.classList.toggle("open");
-        });
+    // --- KHU VỰC CHỐNG ZOOM & ZOOM DEFAULT THEO MÀN HÌNH ---
+    
+    // 1. Chặn phím tắt zoom (Ctrl +, Ctrl -, Ctrl 0) & Chặn cuộn chuột thu phóng khi đè Ctrl
+    window.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && (e.key === '=' || e.key === '-' || e.key === '0' || e.key === '+' || e.key === '_')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    window.addEventListener('wheel', (e) => {
+        if (e.ctrlKey) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // 2. Tự động tính toán scale zoom mặc định dựa theo mật độ điểm ảnh thiết bị (Windows DPI Scale)
+    function autoAdjustLayoutScale() {
+        if (window.chrome && window.chrome.webview) {
+            // Đảm bảo chữ sắc nét không mờ và giữ nguyên tỷ lệ box khi OS thay đổi Scale (>100%)
+            if (window.devicePixelRatio && window.devicePixelRatio !== 1) {
+                // Tùy chọn: document.body.style.zoom = `${1 / window.devicePixelRatio}`;
+            }
+        }
     }
+    autoAdjustLayoutScale();
+    window.addEventListener('resize', autoAdjustLayoutScale);
 
+    // Advanced options toggle
+    document.querySelectorAll(".advanced-options-wrapper").forEach(wrapper => {
+        const advancedToggleBtn = wrapper.querySelector(".advanced-toggle-btn");
+        if (!advancedToggleBtn) return;
+
+        advancedToggleBtn.addEventListener("click", () => {
+            wrapper.classList.toggle("open");
+            requestPopupResize();
+        });
+    });
 
     // Setup premium keypress recorder for hotkey input
     if (hotkeyInput) {
@@ -737,8 +939,6 @@ document.addEventListener("DOMContentLoaded", () => {
             event.stopPropagation();
 
             const key = event.key;
-            
-            // Ignore standalone modifier keydown events (we will capture them when a combination key is pressed)
             if (key === "Control" || key === "Shift" || key === "Alt" || key === "Meta") {
                 let mods = [];
                 if (event.ctrlKey) mods.push("Ctrl");
@@ -752,14 +952,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // Build key combination
             let parts = [];
             if (event.ctrlKey) parts.push("Ctrl");
             if (event.shiftKey) parts.push("Shift");
             if (event.altKey) parts.push("Alt");
             if (event.metaKey) parts.push("Win");
 
-            // Map event.key to our friendly display names
             let keyDisplay = key;
             if (key === " ") {
                 keyDisplay = "Space";
@@ -785,8 +983,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const params = new URLSearchParams(window.location.search);
-    if (params.get("mode") === "settings")
-    {
+    if (params.get("mode") === "settings") {
         document.body.classList.add("settings-only");
         switchTab("settings");
     }
