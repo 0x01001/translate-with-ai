@@ -1,0 +1,56 @@
+name: Auto Build & Release ReWrite
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Publish
+        run: dotnet publish -c Release -r win-x64 -o release
+
+      # 👉 lấy version từ EXE
+      - name: Get version
+        id: version
+        run: |
+          $exe = "release/ReWrite.exe"
+          $version = (Get-Item $exe).VersionInfo.FileVersion
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+
+      # 👉 rename EXE theo version
+      - name: Rename EXE
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          Rename-Item "release/ReWrite.exe" "ReWrite-v$version.exe"
+
+      # 👉 zip lại
+      - name: Create ZIP
+        run: |
+          Compress-Archive -Path release\* -DestinationPath ReWrite.zip
+
+      # 👉 create release + upload file
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: ReWrite v${{ steps.version.outputs.VERSION }}
+          files: |
+            release/ReWrite-v${{ steps.version.outputs.VERSION }}.exe
+            ReWrite.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
