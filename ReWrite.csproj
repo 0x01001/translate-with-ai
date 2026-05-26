@@ -11,8 +11,8 @@
     <AssemblyName>ReWrite</AssemblyName>
     <RootNamespace>ReWrite</RootNamespace>
     <Product>ReWrite</Product>
-    <Company>The One Line</Company>
-    <Authors>The One Line</Authors>
+    <Authors>Huynh Nam Duy</Authors>
+    <Copyright>© 2026 Huỳnh Nam Duy</Copyright>
     <AssemblyTitle>ReWrite</AssemblyTitle>
     <ApplicationIcon>ui\logo.ico</ApplicationIcon>
     <PublishSingleFile>true</PublishSingleFile>
