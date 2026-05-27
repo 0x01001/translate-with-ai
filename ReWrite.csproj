@@ -40,6 +40,7 @@
     <Page Include="MainWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
     <Page Include="PopupWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
     <Page Include="SettingsWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="TutorialWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
     <Page Include="WelcomeWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
   </ItemGroup>
 
@@ -48,6 +49,7 @@
     <Compile Update="MainWindow.xaml.cs" DependentUpon="MainWindow.xaml" />
     <Compile Update="PopupWindow.xaml.cs" DependentUpon="PopupWindow.xaml" />
     <Compile Update="SettingsWindow.xaml.cs" DependentUpon="SettingsWindow.xaml" />
+    <Compile Update="TutorialWindow.xaml.cs" DependentUpon="TutorialWindow.xaml" />
     <Compile Update="WelcomeWindow.xaml.cs" DependentUpon="WelcomeWindow.xaml" />
   </ItemGroup>
 
