@@ -12,7 +12,8 @@ namespace ReWrite
 
         private readonly MainWindow _parent;
         private IntPtr _targetHwnd = IntPtr.Zero;
-        private bool _isInitialized = false;
+        private bool _webViewReady = false;   // CoreWebView2 is initialized
+        private bool _uiReady = false;          // Front-end has sent ui_ready
         private string _pendingText = "";
         private bool _pendingSettings = false;
 
@@ -64,18 +65,11 @@ namespace ReWrite
                     LoadingOverlay.Visibility = Visibility.Visible;
                 }
 
-                webView.Source = new Uri("https://rewrite.local/index.html");
                 webView.WebMessageReceived += WebView_WebMessageReceived;
+                webView.Source = new Uri("https://rewrite.local/index.html");
 
-                _isInitialized = true;
-
-                // If there was text waiting to be shown while webview was loading, push it now
-                if (!string.IsNullOrEmpty(_pendingText) || _pendingSettings)
-                {
-                    PushShowMessage(_pendingText, _pendingSettings);
-                    _pendingText = "";
-                    _pendingSettings = false;
-                }
+                _webViewReady = true;
+                // Pending text will be sent after ui_ready is received from the front-end
             }
             catch (Exception ex)
             {
@@ -96,12 +90,14 @@ namespace ReWrite
         {
             _targetHwnd = targetHwnd;
 
-            if (_isInitialized)
+            if (_uiReady)
             {
+                // UI is fully ready — send immediately
                 PushShowMessage(selectedText, openSettingsDirectly);
             }
             else
             {
+                // Store and send once ui_ready arrives
                 _pendingText = selectedText;
                 _pendingSettings = openSettingsDirectly;
             }
@@ -137,7 +133,16 @@ namespace ReWrite
 
                 if (action == "ui_ready")
                 {
+                    _uiReady = true;
                     HideLoadingOverlay();
+
+                    // If there was text or settings queued before UI was ready, send it now
+                    if (!string.IsNullOrEmpty(_pendingText) || _pendingSettings)
+                    {
+                        PushShowMessage(_pendingText, _pendingSettings);
+                        _pendingText = "";
+                        _pendingSettings = false;
+                    }
                     return;
                 }
                 if (action == "paste")
@@ -198,7 +203,7 @@ namespace ReWrite
 
         private void SendStartupStatus()
         {
-            if (!_isInitialized) return;
+            if (!_webViewReady) return;
             try
             {
                 var payload = new
@@ -214,7 +219,7 @@ namespace ReWrite
 
         private void SendHotkeyStatus()
         {
-            if (!_isInitialized) return;
+            if (!_webViewReady) return;
             try
             {
                 var payload = new
@@ -230,7 +235,7 @@ namespace ReWrite
 
         private void SendHotkeyError(string message)
         {
-            if (!_isInitialized) return;
+            if (!_webViewReady) return;
             try
             {
                 var payload = new
