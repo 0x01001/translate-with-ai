@@ -9,7 +9,7 @@ let lastRequestMeta = null;
 // Settings default structure (will load from localStorage)
 let settings = {
     geminiKey: "",
-    geminiModel: "gemini-1.5-flash",
+    geminiModel: "gemini-3.1-flash-lite",
     openaiKey: "",
     openaiModel: "gpt-4o-mini",
     activeProvider: "gemini"
@@ -22,6 +22,7 @@ const sourcePreview = document.getElementById("source-preview");
 const translateSourcePreview = document.getElementById("translate-source-preview");
 const sourceBubbleWrapper = document.getElementById("source-bubble-wrapper");
 const resultContainer = document.getElementById("result-container");
+const resultContentPanel = document.getElementById("result-content-panel");
 const triggerSection = document.getElementById("trigger-section");
 const aiOutput = document.getElementById("ai-output");
 const diffOutput = document.getElementById("diff-output");
@@ -51,6 +52,25 @@ function escapeHtml(text) {
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
+}
+
+function getModelLabel() {
+    const model = settings.activeProvider === "gemini"
+        ? settings.geminiModel
+        : settings.openaiModel;
+
+    return model
+        .replace(/-/g, " ")
+        .split(" ")
+        .filter(Boolean)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+}
+
+function updateModelLabel() {
+    const el = document.getElementById("model-label");
+    if (!el) return;
+    el.textContent = getModelLabel();
 }
 
 function formatTime(date) {
@@ -190,12 +210,13 @@ function refreshAppSettings() {
             console.error("Failed to parse settings", e);
         }
     }
+    updateModelLabel();
 }
 
 // Tab Switching
-function switchTab(tabId) {
+async function switchTab(tabId) {
     currentTab = tabId;
-    
+
     // Active tabs headers
     tabs.forEach(btn => {
         if (btn.getAttribute("data-tab") === tabId) {
@@ -242,6 +263,10 @@ function switchTab(tabId) {
             triggerSection.style.display = "block";
         }
     }
+    // aiOutput.innerHTML = await getLoaderHTML();
+
+    // resultContainer.style.display = "block";
+    // triggerSection.style.display = "none";
 
     requestPopupResize();
 }
@@ -257,10 +282,10 @@ tabs.forEach(btn => {
 if (window.chrome && window.chrome.webview) {
     window.chrome.webview.addEventListener("message", event => {
         const data = event.data;
-        
+
         if (data.event === "show") {
             selectedText = data.text ? data.text.trim() : "";
-            
+
             // Clean up previous AI results on fresh trigger
             aiResult = "";
             aiOutput.innerHTML = "Đang chờ yêu cầu...";
@@ -269,7 +294,7 @@ if (window.chrome && window.chrome.webview) {
             btnShowDiff.classList.add("hidden");
             switchResultTab("normal");
             updateResultMeta(true);
-            
+
             // Set text preview
             if (selectedText) {
                 sourcePreview.textContent = selectedText;
@@ -284,7 +309,7 @@ if (window.chrome && window.chrome.webview) {
                 translateSourcePreview.classList.add("text-gray-500");
                 switchTab("write");
             }
-            
+
             const activePromptInput = document.getElementById(`${currentTab}-prompt-input`);
             if (activePromptInput) {
                 activePromptInput.focus();
@@ -307,6 +332,20 @@ document.addEventListener("mousedown", event => {
 document.getElementById("btn-generate").addEventListener("click", startAIProcess);
 document.getElementById("btn-retry").addEventListener("click", startAIProcess);
 
+let cachedLoaderHTML = null;
+
+async function getLoaderHTML() {
+    if (cachedLoaderHTML) {
+        return cachedLoaderHTML;
+    }
+
+    const response = await fetch("ai-loader.html");
+
+    cachedLoaderHTML = await response.text();
+
+    return cachedLoaderHTML;
+}
+
 async function startAIProcess() {
     refreshAppSettings();
     resultContainer.style.display = "flex";
@@ -314,96 +353,92 @@ async function startAIProcess() {
     requestPopupResize();
 
     const resultPanel = document.querySelector("#ai-output").parentElement.parentElement;
-    resultPanel.classList.add("relative");
-    
-    aiOutput.innerHTML = `
-        <div class="flex items-center gap-1.5 py-1 text-indigo-400 font-medium">
-            <span>Đang viết, chờ xíu ✍️</span>
-            <span class="stream-cursor"></span>
-        </div>`;
-    
+    resultPanel.classList.add("relative", "result-panel", "loading", "ai-output-loading");
+
+    // Cancel overflow and setup loader
+    aiOutput.classList.remove("overflow-y-auto");
+    aiOutput.classList.add("overflow-hidden");
+    aiOutput.innerHTML = await getLoaderHTML();
+
     toggleButtonsDisabled(true);
-    
-    // Build Prompt
-    let prompt = "";
-    const activeTab = currentTab === "history" ? lastActiveTextTab : currentTab;
-    
-    const tone = document.getElementById(`${activeTab}-param-tone`)?.value || "";
-    const format = document.getElementById(`${activeTab}-param-format`)?.value || "";
-    const length = document.getElementById(`${activeTab}-param-length`)?.value || "";
-    const customPrompt = document.getElementById(`${activeTab}-prompt-input`)?.value.trim() || "";
-    const targetLang = document.getElementById("param-lang")?.value || "Tiếng Việt";
-    
-    lastRequestMeta = {
-        tab: activeTab,
-        tone,
-        format,
-        length,
-        prompt: customPrompt,
-        targetLang,
-        sourceText: selectedText
-    };
-    updateResultMeta(true);
-    
-    if (activeTab === "rewrite") {
-        if (!selectedText) {
-            aiOutput.innerHTML = "<span class='text-rose-400'>Lỗi: Không tìm thấy văn bản đã chọn. Vui lòng đóng cửa sổ này, bôi đen văn bản cần viết lại bên ngoài, rồi nhấn phím tắt.</span>";
-            toggleButtonsDisabled(false);
-            return;
-        }
-        
-        prompt = `Bạn là một trợ lý viết lách chuyên nghiệp. Hãy viết lại (rewrite) đoạn văn sau đây:
+
+    try {
+        // Build Prompt
+        let prompt = "";
+        const activeTab = currentTab === "history" ? lastActiveTextTab : currentTab;
+
+        const tone = document.getElementById(`${activeTab}-param-tone`)?.value || "";
+        const format = document.getElementById(`${activeTab}-param-format`)?.value || "";
+        const length = document.getElementById(`${activeTab}-param-length`)?.value || "";
+        const customPrompt = document.getElementById(`${activeTab}-prompt-input`)?.value.trim() || "";
+        const targetLang = document.getElementById("param-lang")?.value || "Tiếng Việt";
+
+        lastRequestMeta = {
+            tab: activeTab,
+            tone,
+            format,
+            length,
+            prompt: customPrompt,
+            targetLang,
+            sourceText: selectedText
+        };
+        updateResultMeta(true);
+
+        if (activeTab === "rewrite") {
+            if (!selectedText) {
+                aiOutput.innerHTML = "<span class='text-rose-400'>Lỗi: Không tìm thấy văn bản đã chọn. Vui lòng đóng cửa sổ này, bôi đen văn bản cần viết lại bên ngoài, rồi nhấn phím tắt.</span>";
+                return;
+            }
+
+            prompt = `Bạn là một trợ lý viết lách chuyên nghiệp. Hãy viết lại (rewrite) đoạn văn sau đây:
 - Tone giọng yêu cầu: ${getToneText(tone)}
 - Định dạng yêu cầu: ${getFormatText(format)}
 - Độ dài yêu cầu: ${getLengthText(length)}
 ${customPrompt ? `- Yêu cầu đặc biệt bổ sung: "${customPrompt}"` : ""}
 
 Đoạn văn gốc cần viết lại:
-        """
-        ${selectedText}
-        """
+            """
+            ${selectedText}
+            """
 
-    Hãy CHỈ trả về nội dung đã được viết lại trực tiếp. Giữ nguyên ngôn ngữ gốc và định dạng (xuống dòng, gạch đầu dòng, tiêu đề). Tuyệt đối không thêm lời giới thiệu, lời kết, không giải thích lý do thay đổi và không bọc trong markdown codeblock.`;
-    } 
-    else if (activeTab === "write") {
-        if (!customPrompt) {
-            aiOutput.innerHTML = "<span class='text-rose-400'>Lỗi: Vui lòng nhập nội dung gợi ý (Prompt) hoặc chủ đề bạn muốn soạn thảo.</span>";
-            toggleButtonsDisabled(false);
-            return;
+        Hãy CHỈ trả về nội dung đã được viết lại trực tiếp. Giữ nguyên ngôn ngữ gốc và định dạng (xuống dòng, gạch đầu dòng, tiêu đề). Tuyệt đối không thêm lời giới thiệu, lời kết, không giải thích lý do thay đổi và không bọc trong markdown codeblock.`;
         }
-        
-        prompt = `Bạn là một trợ lý viết lách chuyên nghiệp. Hãy soạn thảo một bài viết/văn bản mới theo yêu cầu sau:
-        - Chủ đề/Yêu cầu soạn thảo: "${customPrompt}"
+        else if (activeTab === "write") {
+            if (!customPrompt) {
+                aiOutput.innerHTML = "<span class='text-rose-400'>Lỗi: Vui lòng nhập nội dung gợi ý (Prompt) hoặc chủ đề bạn muốn soạn thảo.</span>";
+                return;
+            }
+
+            prompt = `Bạn là một trợ lý viết lách chuyên nghiệp. Hãy soạn thảo một bài viết/văn bản mới theo yêu cầu sau:
+            - Chủ đề/Yêu cầu soạn thảo: "${customPrompt}"
 - Tone giọng yêu cầu: ${getToneText(tone)}
 - Định dạng yêu cầu: ${getFormatText(format)}
 - Độ dài yêu cầu: ${getLengthText(length)}
 ${selectedText ? `- Văn bản gợi ý bổ trợ ngữ cảnh (Context): "${selectedText}"` : ""}
 
-        Hãy CHỈ trả về nội dung đã soạn thảo hoàn chỉnh trực tiếp. Tuyệt đối không thêm lời giới thiệu, lời kết, không giải thích lý do và không bọc trong markdown codeblock.`;
-    } 
-    else if (activeTab === "translate") {
-        if (!selectedText) {
-            aiOutput.innerHTML = "<span class='text-rose-400'>Lỗi: Không tìm thấy văn bản cần dịch. Vui lòng đóng cửa sổ, bôi đen văn bản cần dịch bên ngoài, rồi nhấn phím tắt.</span>";
-            toggleButtonsDisabled(false);
-            return;
+            Hãy CHỈ trả về nội dung đã soạn thảo hoàn chỉnh trực tiếp. Tuyệt đối không thêm lời giới thiệu, lời kết, không giải thích lý do và không bọc trong markdown codeblock.`;
         }
-        
-        prompt = `Hãy dịch chính xác đoạn văn sau đây sang ${targetLang}:
+        else if (activeTab === "translate") {
+            if (!selectedText) {
+                aiOutput.innerHTML = "<span class='text-rose-400'>Lỗi: Không tìm thấy văn bản cần dịch. Vui lòng đóng cửa sổ, bôi đen văn bản cần dịch bên ngoài, rồi nhấn phím tắt.</span>";
+                return;
+            }
+
+            prompt = `Hãy dịch chính xác đoạn văn sau đây sang ${targetLang}:
 """
 ${selectedText}
 """
 
 Hãy CHỈ trả về nội dung bản dịch trực tiếp. Giữ nguyên định dạng đoạn văn, tuyệt đối không giải thích, không thêm lời chào hay bọc trong markdown codeblock.`;
-    }
+        }
 
-    try {
         aiResult = "";
         if (settings.activeProvider === "gemini") {
             await streamGemini(prompt);
         } else {
             await streamOpenAI(prompt);
         }
-        
+
         if (selectedText && (activeTab === "rewrite" || activeTab === "translate")) {
             btnShowDiff.classList.remove("hidden");
             calculateAndRenderDiff();
@@ -413,10 +448,15 @@ Hãy CHỈ trả về nội dung bản dịch trực tiếp. Giữ nguyên đị
 
         updateResultMeta(false);
         addHistoryItem();
-        
+
     } catch (error) {
         aiOutput.innerHTML = `<span class='text-rose-400'>Lỗi kết nối API: ${error.message}<br>Vui lòng mở Cài đặt (từ khay hệ thống) để cấu hình API Key chính xác.</span>`;
     } finally {
+        // Allow overflow and remove loading
+        aiOutput.classList.remove("overflow-hidden");
+        aiOutput.classList.add("overflow-y-auto");
+        resultContentPanel.classList.remove("justify-center");
+        resultPanel.classList.remove("loading", "ai-output-loading");
         toggleButtonsDisabled(false);
     }
 }
@@ -426,9 +466,9 @@ async function streamGemini(prompt) {
     if (!settings.geminiKey) {
         throw new Error("Chưa cấu hình Gemini API Key. Hãy cấu hình thông qua cửa sổ Cài đặt của ứng dụng.");
     }
-    
+
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${settings.geminiModel}:streamGenerateContent?key=${settings.geminiKey}`;
-    
+
     const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -451,18 +491,18 @@ async function streamGemini(prompt) {
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+
         buffer += decoder.decode(value, { stream: true });
-        
+
         let boundaryIndex;
         while ((boundaryIndex = findJsonEnd(buffer)) !== -1) {
             let jsonStr = buffer.substring(0, boundaryIndex).trim();
             buffer = buffer.substring(boundaryIndex);
-            
+
             if (jsonStr.startsWith(",")) jsonStr = jsonStr.substring(1).trim();
             if (jsonStr.startsWith("[")) jsonStr = jsonStr.substring(1).trim();
             if (jsonStr.endsWith("]")) jsonStr = jsonStr.substring(0, jsonStr.length - 1).trim();
-            
+
             if (jsonStr) {
                 try {
                     const parsed = JSON.parse(jsonStr);
@@ -478,7 +518,7 @@ async function streamGemini(prompt) {
             }
         }
     }
-    
+
     if (buffer.trim()) {
         try {
             let cleanStr = buffer.trim();
@@ -489,9 +529,9 @@ async function streamGemini(prompt) {
             if (chunkText) {
                 aiResult += chunkText;
             }
-        } catch(e) {}
+        } catch (e) { }
     }
-    
+
     renderStreamingText(aiResult, true);
 }
 
@@ -499,7 +539,7 @@ function findJsonEnd(str) {
     let depth = 0;
     let inString = false;
     let escape = false;
-    
+
     for (let i = 0; i < str.length; i++) {
         const char = str[i];
         if (escape) {
@@ -530,9 +570,9 @@ async function streamOpenAI(prompt) {
     if (!settings.openaiKey) {
         throw new Error("Chưa cấu hình OpenAI API Key. Hãy cấu hình thông qua cửa sổ Cài đặt của ứng dụng.");
     }
-    
+
     const url = "https://api.openai.com/v1/chat/completions";
-    
+
     const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -560,15 +600,15 @@ async function streamOpenAI(prompt) {
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
         buffer = lines.pop();
-        
+
         for (const line of lines) {
             const cleanLine = line.trim();
             if (!cleanLine || cleanLine === "data: [DONE]") continue;
-            
+
             if (cleanLine.startsWith("data: ")) {
                 try {
                     const parsed = JSON.parse(cleanLine.substring(6));
@@ -583,7 +623,7 @@ async function streamOpenAI(prompt) {
             }
         }
     }
-    
+
     renderStreamingText(aiResult, true);
 }
 
@@ -697,15 +737,15 @@ document.getElementById("btn-replace").addEventListener("click", () => {
 
 function calculateAndRenderDiff() {
     if (!selectedText || !aiResult) return;
-    
+
     const oldWords = selectedText.split(/(\s+)/);
     const newWords = aiResult.split(/(\s+)/);
-    
+
     const oldFiltered = oldWords.filter(w => w !== "");
     const newFiltered = newWords.filter(w => w !== "");
-    
+
     const diff = computeLcsDiff(oldFiltered, newFiltered);
-    
+
     let html = "";
     diff.forEach(token => {
         const textEscaped = token.text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -727,7 +767,7 @@ function calculateAndRenderDiff() {
             }
         }
     });
-    
+
     diffOutput.innerHTML = html;
 }
 
@@ -735,13 +775,13 @@ function computeLcsDiff(oldList, newList) {
     const m = oldList.length;
     const n = newList.length;
     const dp = Array(m + 1).fill(0).map(() => Array(n + 1).fill(0));
-    
+
     for (let i = 1; i <= m; i++) {
         for (let j = 1; j <= n; j++) {
             const wordA = oldList[i - 1].trim().toLowerCase();
             const wordB = newList[j - 1].trim().toLowerCase();
-            const isMatch = (wordA === wordB && wordA !== "") || (oldList[i-1] === newList[j-1]);
-            
+            const isMatch = (wordA === wordB && wordA !== "") || (oldList[i - 1] === newList[j - 1]);
+
             if (isMatch) {
                 dp[i][j] = dp[i - 1][j - 1] + 1;
             } else {
@@ -749,23 +789,23 @@ function computeLcsDiff(oldList, newList) {
             }
         }
     }
-    
+
     let i = m, j = n;
     const result = [];
-    
+
     while (i > 0 || j > 0) {
         if (i > 0 && j > 0) {
             const wordA = oldList[i - 1].trim().toLowerCase();
             const wordB = newList[j - 1].trim().toLowerCase();
-            const isMatch = (wordA === wordB && wordA !== "") || (oldList[i-1] === newList[j-1]);
-            
+            const isMatch = (wordA === wordB && wordA !== "") || (oldList[i - 1] === newList[j - 1]);
+
             if (isMatch) {
                 result.unshift({ type: "normal", text: newList[j - 1] });
                 i--; j--;
                 continue;
             }
         }
-        
+
         if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
             result.unshift({ type: "ins", text: newList[j - 1] });
             j--;

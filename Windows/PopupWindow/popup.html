@@ -1,62 +1,203 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ReWrite Assistant</title>
     <link rel="stylesheet" href="https://rewrite.local/tailwind.css">
+    <style>
+        /* PANEL */
+        .result-panel {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: box-shadow 0.6s ease-in-out;
+        }
+
+        /* flex ai-output loadding */
+        .ai-output-loading {
+            position: relative;
+            width: 100%;
+            height: 150px;
+        }
+
+        /* Ambient breathing shadow during thinking state */
+        .result-panel.loading {
+            animation: pulseGlow 2.5s infinite ease-in-out;
+        }
+
+        /* Seamless premium glow ring */
+        .result-panel.loading::before {
+            content: "";
+            position: absolute;
+            width: 260%;
+            height: 260%;
+            left: -80%;
+            top: -80%;
+            background: conic-gradient(from 0deg,
+                    #6366f1 0%,
+                    #a855f7 20%,
+                    #ec4899 40%,
+                    #06b6d4 60%,
+                    #3b82f6 80%,
+                    #6366f1 100%);
+            animation: borderSpin 3s linear infinite;
+            z-index: 1;
+        }
+
+        /* Inner mask */
+        .result-panel.loading::after {
+            content: "";
+            position: absolute;
+            inset: 1.5px;
+            border-radius: 10.5px;
+            background: #0f1115;
+            z-index: 2;
+        }
+
+        /* Elevate contents above the mask layers */
+        .result-panel>* {
+            position: relative;
+            z-index: 3;
+        }
+
+        @keyframes borderSpin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulseGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 12px rgba(99, 102, 241, 0.12), 0 0 24px rgba(236, 72, 153, 0.04);
+            }
+
+            50% {
+                box-shadow: 0 0 22px rgba(99, 102, 241, 0.28), 0 0 38px rgba(6, 182, 212, 0.15);
+            }
+        }
+    </style>
 </head>
+
 <body class="bg-transparent text-gray-100 overflow-hidden font-sans select-none antialiased">
-    <div class="app-container w-screen h-auto flex flex-col bg-[#0F1115]/80 backdrop-blur-3xl border border-white/8 rounded-2xl p-4 relative">
+    <div class="app-container w-screen h-auto flex flex-col bg-[#0F1115]/80 backdrop-blur-3xl p-4 relative">
         <!-- Header -->
-        <header class="flex justify-between items-center mb-3 shrink-0">
-            <div class="flex items-center gap-2">
-                <img class="w-8 h-8 object-contain drop-shadow-[0_0_8px_rgba(236,72,153,0.2)]" src="https://rewrite.local/logo.png" alt="logo">
-                <h1 class="text-sm font-semibold tracking-wider bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">ReWrite</h1>
+        <header class="mb-2 flex shrink-0 flex-col gap-1.5">
+            <!-- Branding line -->
+            <div
+                style="display:flex;align-items:center;justify-content:space-between;height:22px;line-height:22px;opacity:0.95;">
+                <div style="display:flex;align-items:center;gap:6px;min-width:0;"><img
+                        src="https://rewrite.local/logo.png"
+                        style="width:16px;height:16px;object-fit:contain;border-radius:4px;opacity:0.9;" /><span
+                        style="font-size:12px;font-weight:600;letter-spacing:0.4px;color:#ffffff;text-transform:uppercase;white-space:nowrap;">ReWrite</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;"><span id="model-label"
+                        style="font-size:11px;color:rgba(255,255,255,0.55);letter-spacing:0.2px;">Powered by AI</span>
+                </div>
             </div>
-            
-            <nav class="flex gap-1 bg-white/5 p-1 rounded-lg border border-white/5">
-                <button class="tab-btn active flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all" data-tab="rewrite">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-astroid"><path d="M12.983 21.186a1 1 0 0 1-1.966 0 10 10 0 0 0-8.203-8.203 1 1 0 0 1 0-1.966 10 10 0 0 0 8.203-8.203 1 1 0 0 1 1.966 0 10 10 0 0 0 8.203 8.203 1 1 0 0 1 0 1.966 10 10 0 0 0-8.203 8.203"/></svg>
-                    <span>Viết lại</span>
+
+            <!-- Nav line -->
+            <!-- Nav line - Cố định 4 cột bằng grid-cols-4 -->
+            <nav class="grid grid-cols-4 gap-1 rounded-lg border border-white/5 bg-white/5 p-1">
+
+                <button
+                    class="tab-btn active flex items-center justify-center gap-1.5 rounded-md px-1 py-1 text-xs font-medium text-gray-400 transition-all hover:bg-white/5 hover:text-white"
+                    data-tab="rewrite">
+                    <svg xmlns="http://w3.org" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-astroid">
+                        <path
+                            d="M12.983 21.186a1 1 0 0 1-1.966 0 10 10 0 0 0-8.203-8.203 1 1 0 0 1 0-1.966 10 10 0 0 0 8.203-8.203 1 1 0 0 1 1.966 0 10 10 0 0 0 8.203 8.203 1 1 0 0 1 0 1.966 10 10 0 0 0-8.203 8.203" />
+                    </svg>
+                    <span class="truncate">Viết lại</span>
                 </button>
-                <button class="tab-btn flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all" data-tab="write">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pen-tool"><path d="M15.707 21.293a1 1 0 0 1-1.414 0l-1.586-1.586a1 1 0 0 1 0-1.414l5.586-5.586a1 1 0 0 1 1.414 0l1.586 1.586a1 1 0 0 1 0 1.414z"/><path d="m18 13-1.375-6.874a1 1 0 0 0-.746-.776L3.235 2.028a1 1 0 0 0-1.207 1.207L5.35 15.879a1 1 0 0 0 .776.746L13 18"/><path d="m2.3 2.3 7.286 7.286"/><circle cx="11" cy="11" r="2"/></svg>
-                    <span>Soạn thảo</span>
+
+                <button
+                    class="tab-btn flex items-center justify-center gap-1.5 rounded-md px-1 py-1 text-xs font-medium text-gray-400 transition-all hover:bg-white/5 hover:text-white"
+                    data-tab="write">
+                    <svg xmlns="http://w3.org" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-pen-tool">
+                        <path
+                            d="M15.707 21.293a1 1 0 0 1-1.414 0l-1.586-1.586a1 1 0 0 1 0-1.414l5.586-5.586a1 1 0 0 1 1.414 0l1.586 1.586a1 1 0 0 1 0 1.414z" />
+                        <path
+                            d="m18 13-1.375-6.874a1 1 0 0 0-.746-.776L3.235 2.028a1 1 0 0 0-1.207 1.207L5.35 15.879a1 1 0 0 0 .776.746L13 18" />
+                        <path d="m2.3 2.3 7.286 7.286" />
+                        <circle cx="11" cy="11" r="2" />
+                    </svg>
+                    <span class="truncate">Soạn thảo</span>
                 </button>
-                <button class="tab-btn flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all" data-tab="translate">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-languages"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
-                    <span>Dịch thuật</span>
+
+                <button
+                    class="tab-btn flex items-center justify-center gap-1.5 rounded-md px-1 py-1 text-xs font-medium text-gray-400 transition-all hover:bg-white/5 hover:text-white"
+                    data-tab="translate">
+                    <svg xmlns="http://w3.org" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-languages">
+                        <path d="m5 8 6 6" />
+                        <path d="m4 14 6-6 2-3" />
+                        <path d="M2 5h12" />
+                        <path d="M7 2h1" />
+                        <path d="m22 22-5-10-5 10" />
+                        <path d="M14 18h6" />
+                    </svg>
+                    <span class="truncate">Dịch thuật</span>
                 </button>
-                <button class="tab-btn flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all" data-tab="history">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-history"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 7v5h5"/><path d="M12 7v5l3 3"/></svg>
-                    <span>Lịch sử</span>
+
+                <button
+                    class="tab-btn flex items-center justify-center gap-1.5 rounded-md px-1 py-1 text-xs font-medium text-gray-400 transition-all hover:bg-white/5 hover:text-white"
+                    data-tab="history">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-history-icon lucide-history">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                        <path d="M12 7v5l4 2" />
+                    </svg>
+                    <span class="truncate">Lịch sử</span>
                 </button>
+
             </nav>
+
         </header>
 
         <!-- Main workspace -->
-        <main class="app-main flex flex-col overflow-y-auto max-h-[360px] pr-0.5">
+        <main class="app-main flex flex-col overflow-y-auto max-h-[390px] pr-0.5">
             <!-- Rewrite Tab -->
             <section id="tab-rewrite" class="tab-pane active hidden animate-fadeIn">
                 <div class="mb-2.5" id="source-bubble-wrapper">
-                    <span class="block text-[9px] text-gray-400 uppercase tracking-wider font-semibold mb-1">Văn bản đã chọn:</span>
-                    <div class="text-[11px] leading-relaxed bg-white/3 border border-white/5 p-2 rounded-lg max-h-[50px] overflow-y-auto text-gray-200 whitespace-pre-wrap break-all" id="source-preview">Đang chờ văn bản...</div>
+                    <span class="block text-[9px] text-gray-400 uppercase tracking-wider font-semibold mb-1">Văn bản đã
+                        chọn:</span>
+                    <div class="text-[11px] leading-relaxed bg-white/3 border border-white/5 p-2 rounded-lg max-h-[50px] overflow-y-auto text-gray-200 whitespace-pre-wrap break-all"
+                        id="source-preview">Đang chờ văn bản...</div>
                 </div>
 
                 <div class="advanced-options-wrapper mb-2.5" id="rewrite-advanced-options-wrapper">
-                    <button class="advanced-toggle-btn w-full flex items-center gap-2 bg-white/3 border border-white/5 hover:bg-white/6 hover:text-white text-gray-400 py-1.5 px-3 rounded-lg text-[10.5px] cursor-pointer transition-all" id="rewrite-advanced-toggle-btn">
+                    <button
+                        class="advanced-toggle-btn w-full flex items-center gap-2 bg-white/3 border border-white/5 hover:bg-white/6 hover:text-white text-gray-400 py-1.5 px-3 rounded-lg text-[10.5px] cursor-pointer transition-all"
+                        id="rewrite-advanced-toggle-btn">
                         <svg class="expand-icon w-3.5 h-3.5 transition-transform duration-250" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M7 10l5 5 5-5z" />
                         </svg>
                         <span>Tùy chỉnh nâng cao</span>
                     </button>
 
-                    <div class="advanced-options-panel max-h-0 opacity-0 overflow-hidden transition-all duration-300 ease-in-out" id="rewrite-advanced-options-panel">
+                    <div class="advanced-options-panel max-h-0 opacity-0 overflow-hidden transition-all duration-300 ease-in-out"
+                        id="rewrite-advanced-options-panel">
                         <div class="grid grid-cols-3 gap-2 mt-2 mb-2">
                             <div class="flex flex-col gap-1">
-                                <label class="text-[9.5px] font-medium text-gray-400" for="rewrite-param-tone">Tone giọng</label>
-                                <select class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500" id="rewrite-param-tone">
+                                <label class="text-[9.5px] font-medium text-gray-400" for="rewrite-param-tone">Tone
+                                    giọng</label>
+                                <select
+                                    class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500"
+                                    id="rewrite-param-tone">
                                     <option value="" selected>Mặc định</option>
                                     <option value="professional">Chuyên nghiệp</option>
                                     <option value="casual">Thân thiện, gần gũi</option>
@@ -67,8 +208,11 @@
                                 </select>
                             </div>
                             <div class="flex flex-col gap-1">
-                                <label class="text-[9.5px] font-medium text-gray-400" for="rewrite-param-format">Định dạng</label>
-                                <select class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500" id="rewrite-param-format">
+                                <label class="text-[9.5px] font-medium text-gray-400" for="rewrite-param-format">Định
+                                    dạng</label>
+                                <select
+                                    class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500"
+                                    id="rewrite-param-format">
                                     <option value="" selected>Mặc định</option>
                                     <option value="paragraph">Đoạn văn</option>
                                     <option value="bullets">Danh sách</option>
@@ -78,8 +222,11 @@
                                 </select>
                             </div>
                             <div class="flex flex-col gap-1">
-                                <label class="text-[9.5px] font-medium text-gray-400" for="rewrite-param-length">Độ dài</label>
-                                <select class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500" id="rewrite-param-length">
+                                <label class="text-[9.5px] font-medium text-gray-400" for="rewrite-param-length">Độ
+                                    dài</label>
+                                <select
+                                    class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500"
+                                    id="rewrite-param-length">
                                     <option value="" selected>Mặc định</option>
                                     <option value="short">Ngắn</option>
                                     <option value="medium">Vừa phải</option>
@@ -89,8 +236,11 @@
                         </div>
 
                         <div class="flex flex-col gap-1">
-                            <label class="text-[9.5px] font-medium text-gray-400" for="rewrite-prompt-input">Yêu cầu bổ sung</label>
-                            <textarea class="w-full h-11 bg-white/4 border border-white/5 rounded-lg p-2 text-[10.5px] text-gray-200 outline-none resize-none hover:border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20" id="rewrite-prompt-input" placeholder="Ví dụ: Giữ nguyên văn phong gốc..."></textarea>
+                            <label class="text-[9.5px] font-medium text-gray-400" for="rewrite-prompt-input">Yêu cầu bổ
+                                sung</label>
+                            <textarea
+                                class="w-full h-11 bg-white/4 border border-white/5 rounded-lg p-2 text-[10.5px] text-gray-200 outline-none resize-none hover:border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                                id="rewrite-prompt-input" placeholder="Ví dụ: Giữ nguyên văn phong gốc..."></textarea>
                         </div>
                     </div>
                 </div>
@@ -99,23 +249,33 @@
             <!-- Write Tab -->
             <section id="tab-write" class="tab-pane hidden animate-fadeIn">
                 <div class="flex flex-col gap-1 mb-2.5">
-                    <label class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider" for="write-prompt-input">Chủ đề cần soạn thảo <span class="text-rose-400">*</span></label>
-                    <textarea class="w-full h-12 bg-white/4 border border-white/5 rounded-lg p-2 text-[11px] text-gray-200 outline-none resize-none hover:border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20" id="write-prompt-input" placeholder="Nhập chủ đề hoặc hướng dẫn soạn thảo tại đây..."></textarea>
+                    <label class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider"
+                        for="write-prompt-input">Chủ đề cần soạn thảo <span class="text-rose-400">*</span></label>
+                    <textarea
+                        class="w-full h-12 bg-white/4 border border-white/5 rounded-lg p-2 text-[11px] text-gray-200 outline-none resize-none hover:border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                        id="write-prompt-input"
+                        placeholder="Nhập chủ đề hoặc hướng dẫn soạn thảo tại đây..."></textarea>
                 </div>
 
                 <div class="advanced-options-wrapper mb-2.5" id="write-advanced-options-wrapper">
-                    <button class="advanced-toggle-btn w-full flex items-center gap-2 bg-white/3 border border-white/5 hover:bg-white/6 hover:text-white text-gray-400 py-1.5 px-3 rounded-lg text-[10.5px] cursor-pointer transition-all" id="write-advanced-toggle-btn">
+                    <button
+                        class="advanced-toggle-btn w-full flex items-center gap-2 bg-white/3 border border-white/5 hover:bg-white/6 hover:text-white text-gray-400 py-1.5 px-3 rounded-lg text-[10.5px] cursor-pointer transition-all"
+                        id="write-advanced-toggle-btn">
                         <svg class="expand-icon w-3.5 h-3.5 transition-transform duration-250" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M7 10l5 5 5-5z" />
                         </svg>
                         <span>Tùy chỉnh nâng cao</span>
                     </button>
 
-                    <div class="advanced-options-panel max-h-0 opacity-0 overflow-hidden transition-all duration-300 ease-in-out" id="write-advanced-options-panel">
+                    <div class="advanced-options-panel max-h-0 opacity-0 overflow-hidden transition-all duration-300 ease-in-out"
+                        id="write-advanced-options-panel">
                         <div class="grid grid-cols-3 gap-2 mt-2">
                             <div class="flex flex-col gap-1">
-                                <label class="text-[9.5px] font-medium text-gray-400" for="write-param-tone">Tone giọng</label>
-                                <select class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500" id="write-param-tone">
+                                <label class="text-[9.5px] font-medium text-gray-400" for="write-param-tone">Tone
+                                    giọng</label>
+                                <select
+                                    class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500"
+                                    id="write-param-tone">
                                     <option value="" selected>Mặc định</option>
                                     <option value="professional">Chuyên nghiệp</option>
                                     <option value="casual">Thân thiện, gần gũi</option>
@@ -126,8 +286,11 @@
                                 </select>
                             </div>
                             <div class="flex flex-col gap-1">
-                                <label class="text-[9.5px] font-medium text-gray-400" for="write-param-format">Định dạng</label>
-                                <select class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500" id="write-param-format">
+                                <label class="text-[9.5px] font-medium text-gray-400" for="write-param-format">Định
+                                    dạng</label>
+                                <select
+                                    class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500"
+                                    id="write-param-format">
                                     <option value="" selected>Mặc định</option>
                                     <option value="paragraph">Đoạn văn</option>
                                     <option value="bullets">Danh sách</option>
@@ -137,8 +300,11 @@
                                 </select>
                             </div>
                             <div class="flex flex-col gap-1">
-                                <label class="text-[9.5px] font-medium text-gray-400" for="write-param-length">Độ dài</label>
-                                <select class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500" id="write-param-length">
+                                <label class="text-[9.5px] font-medium text-gray-400" for="write-param-length">Độ
+                                    dài</label>
+                                <select
+                                    class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500"
+                                    id="write-param-length">
                                     <option value="" selected>Mặc định</option>
                                     <option value="short">Ngắn</option>
                                     <option value="medium">Vừa phải</option>
@@ -153,13 +319,17 @@
             <!-- Translate Tab -->
             <section id="tab-translate" class="tab-pane hidden animate-fadeIn">
                 <div class="mb-2.5">
-                    <span class="block text-[9px] text-gray-400 uppercase tracking-wider font-semibold mb-1">Văn bản cần dịch:</span>
-                    <div class="text-[11.5px] leading-relaxed bg-white/3 border border-white/5 p-2 rounded-lg max-h-[50px] overflow-y-auto text-gray-200 whitespace-pre-wrap break-all" id="translate-source-preview">Bôi đen văn bản cần dịch ngoài màn hình...</div>
+                    <span class="block text-[9px] text-gray-400 uppercase tracking-wider font-semibold mb-1">
+                        Văn bản cần dịch:</span>
+                    <div class="text-[11.5px] leading-relaxed bg-white/3 border border-white/5 p-2 rounded-lg max-h-[50px] overflow-y-auto text-gray-200 whitespace-pre-wrap break-all"
+                        id="translate-source-preview">Bôi đen văn bản cần dịch ngoài màn hình...</div>
                 </div>
-                
+
                 <div class="flex flex-col gap-1 mb-2.5">
                     <label class="text-[9.5px] font-medium text-gray-400" for="param-lang">Dịch sang ngôn ngữ</label>
-                    <select class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-lg text-xs outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500 w-full" id="param-lang">
+                    <select
+                        class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-lg text-xs outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500 w-full"
+                        id="param-lang">
                         <option value="Tiếng Việt" selected>Tiếng Việt</option>
                         <option value="Tiếng Anh">Tiếng Anh (English)</option>
                         <option value="Tiếng Nhật">Tiếng Nhật (日本語)</option>
@@ -175,11 +345,15 @@
             <section id="tab-history" class="tab-pane hidden animate-fadeIn">
                 <div class="bg-white/2 border border-white/5 rounded-xl p-3 flex flex-col gap-2 mb-2.5">
                     <div class="flex justify-between items-center pb-2 border-b border-white/5">
-                        <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Lịch sử tạm thời</span>
-                        <button class="bg-white/5 border border-white/5 hover:bg-white/8 text-[9px] px-2 py-0.5 rounded-md cursor-pointer font-semibold transition-all" id="btn-clear-history">Xóa sạch</button>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Lịch sử tạm
+                            thời</span>
+                        <button
+                            class="bg-white/5 border border-white/5 hover:bg-white/8 text-[9px] px-2 py-0.5 rounded-md cursor-pointer font-semibold transition-all"
+                            id="btn-clear-history">Xóa sạch</button>
                     </div>
                     <div class="flex flex-col gap-2 max-h-[170px] overflow-y-auto pr-1" id="history-list">
-                        <div class="text-[11px] text-gray-500 text-center py-4" id="history-empty">Chưa có bản lưu nào để hiển thị.</div>
+                        <div class="text-[11px] text-gray-500 text-center py-4" id="history-empty">Chưa có bản lưu nào
+                            để hiển thị.</div>
                     </div>
                 </div>
             </section>
@@ -188,32 +362,51 @@
             <section class="flex flex-col shrink-0 mb-1 animate-slideUp" id="result-container" style="display: none;">
                 <div class="flex justify-between items-center mb-1.5 gap-2">
                     <div class="flex flex-col">
-                        <span class="text-[9px] font-semibold text-gray-400 uppercase tracking-wider">Kết quả từ AI</span>
+                        <span class="text-[9px] font-semibold text-gray-400 uppercase tracking-wider">Kết quả từ
+                            AI</span>
                         <span class="text-[10px] text-gray-200/80" id="result-meta">Đang chuẩn bị...</span>
                     </div>
                     <div class="flex gap-1.5 items-center">
-                        <button class="bg-transparent text-gray-400 hover:text-white px-2 py-0.5 rounded text-[9.5px] font-semibold transition-all" id="btn-show-result">Kết quả</button>
-                        <button class="bg-transparent text-gray-400 hover:text-white px-2 py-0.5 rounded text-[9.5px] font-semibold transition-all hidden" id="btn-show-diff">So sánh (Diff)</button>
-                        <button class="bg-white/5 border border-white/5 hover:bg-white/8 text-[9.5px] px-2 py-0.5 rounded-md cursor-pointer font-semibold transition-all" id="btn-copy-result">Copy</button>
+                        <button
+                            class="bg-transparent text-gray-400 hover:text-white px-2 py-0.5 rounded text-[9.5px] font-semibold transition-all"
+                            id="btn-show-result">Kết quả</button>
+                        <button
+                            class="bg-transparent text-gray-400 hover:text-white px-2 py-0.5 rounded text-[9.5px] font-semibold transition-all hidden"
+                            id="btn-show-diff">So sánh (Diff)</button>
+                        <button
+                            class="bg-white/5 border border-white/5 hover:bg-white/8 text-[9.5px] px-2 py-0.5 rounded-md cursor-pointer font-semibold transition-all"
+                            id="btn-copy-result">Copy</button>
                     </div>
                 </div>
 
-                <div class="bg-white/2 border border-white/5 rounded-xl p-2 mb-2">
-                    <div class="max-h-[140px] flex flex-col" id="normal-output-wrapper">
-                        <div class="w-full min-h-[50px] bg-[#0F1115] border border-white/5 rounded-lg p-2.5 text-[11px] leading-relaxed text-gray-200 overflow-y-auto whitespace-pre-wrap break-words" id="ai-output">Đang chuẩn bị...</div>
+                <div class="flex flex-col items-center justify-center result-panel bg-white/2 border border-white/5 rounded-xl p-2 mb-2"
+                    id="result-content-panel">
+                    <div class="w-full max-h-[140px] flex flex-col" id="normal-output-wrapper">
+                        <div class="ai-output-loading overflow-y-auto w-full min-h-[50px] bg-[#0F1115] border border-white/5 rounded-lg p-2.5 text-[11px] leading-relaxed text-gray-200 whitespace-pre-wrap break-words"
+                            id="ai-output">Đang chuẩn bị...</div>
                     </div>
                     <div class="max-h-[140px] flex flex-col hidden" id="diff-output-wrapper">
-                        <div class="w-full min-h-[50px] bg-[#0F1115] border border-white/5 rounded-lg p-2.5 text-[11px] leading-relaxed text-gray-200 overflow-y-auto whitespace-pre-wrap break-words" id="diff-output"></div>
+                        <div class="w-full min-h-[50px] bg-[#0F1115] border border-white/5 rounded-lg p-2.5 text-[11px] leading-relaxed text-gray-200 overflow-y-auto whitespace-pre-wrap break-words"
+                            id="diff-output"></div>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-3 gap-2 mt-1">
-                    <button class="col-span-1 flex items-center justify-center gap-1.5 py-1.5 px-3 bg-white/5 border border-white/5 hover:bg-white/8 text-white rounded-lg text-[10.5px] font-medium cursor-pointer transition-all active:scale-[0.98]" id="btn-retry">
-                        <svg viewBox="0 0 24 24" width="13" height="13"><path fill="currentColor" d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                    <button
+                        class="col-span-1 flex items-center justify-center gap-1.5 py-1.5 px-3 bg-white/5 border border-white/5 hover:bg-white/8 text-white rounded-lg text-[10.5px] font-medium cursor-pointer transition-all active:scale-[0.98]"
+                        id="btn-retry">
+                        <svg viewBox="0 0 24 24" width="13" height="13">
+                            <path fill="currentColor"
+                                d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
+                        </svg>
                         <span>Thử lại</span>
                     </button>
-                    <button class="col-span-2 flex items-center justify-center gap-1.5 py-1.5 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-lg text-[10.5px] cursor-pointer transition-all active:scale-[0.98] shadow-[0_2px_6px_rgba(99,102,241,0.25)]" id="btn-replace">
-                        <svg viewBox="0 0 24 24" width="13" height="13"><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    <button
+                        class="col-span-2 flex items-center justify-center gap-1.5 py-1.5 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-lg text-[10.5px] cursor-pointer transition-all active:scale-[0.98] shadow-[0_2px_6px_rgba(99,102,241,0.25)]"
+                        id="btn-replace">
+                        <svg viewBox="0 0 24 24" width="13" height="13">
+                            <path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                        </svg>
                         <span>Thay thế kết quả</span>
                     </button>
                 </div>
@@ -221,8 +414,13 @@
 
             <!-- Generate Trigger -->
             <div class="mt-1.5 shrink-0" id="trigger-section">
-                <button class="w-full flex items-center justify-center gap-1.5 py-2 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-lg text-[11px] cursor-pointer transition-all active:scale-[0.97] shadow-[0_3px_8px_rgba(99,102,241,0.3)]" id="btn-generate">
-                    <svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5-1.4 2.5 2.5-1.4 2.5 1.4-1.4-2.5zm0-11L17 3l1.4 2.5-1.4 2.5 2.5-1.4 2.5 1.4-1.4-2.5zm-8.8 6L3 17.25V21h3.75L17.81 9.94l-3.75-3.75zM15 9.07l1.93 1.93-1.63 1.63-1.93-1.93z"/></svg>
+                <button
+                    class="w-full flex items-center justify-center gap-1.5 py-2 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-lg text-[11px] cursor-pointer transition-all active:scale-[0.97] shadow-[0_3px_8px_rgba(99,102,241,0.3)]"
+                    id="btn-generate">
+                    <svg viewBox="0 0 24 24" width="14" height="14">
+                        <path fill="currentColor"
+                            d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5-1.4 2.5 2.5-1.4 2.5 1.4-1.4-2.5zm0-11L17 3l1.4 2.5-1.4 2.5 2.5-1.4 2.5 1.4-1.4-2.5zm-8.8 6L3 17.25V21h3.75L17.81 9.94l-3.75-3.75zM15 9.07l1.93 1.93-1.63 1.63-1.93-1.93z" />
+                    </svg>
                     <span>Bắt đầu thực hiện</span>
                 </button>
             </div>
@@ -230,4 +428,5 @@
     </div>
     <script src="popup.js"></script>
 </body>
+
 </html>
