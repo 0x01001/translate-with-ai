@@ -37,23 +37,26 @@
 
   <ItemGroup>
     <Page Include="App.xaml" SubType="Designer" Generator="MSBuild:Compile" />
-    <Page Include="MainWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
-    <Page Include="PopupWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
-    <Page Include="SettingsWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
-    <Page Include="TutorialWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
-    <Page Include="WelcomeWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Windows\MainWindow\MainWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Windows\PopupWindow\PopupWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Windows\SettingsWindow\SettingsWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Windows\TutorialWindow\TutorialWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Windows\WelcomeWindow\WelcomeWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Update="App.xaml.cs" DependentUpon="App.xaml" />
-    <Compile Update="MainWindow.xaml.cs" DependentUpon="MainWindow.xaml" />
-    <Compile Update="PopupWindow.xaml.cs" DependentUpon="PopupWindow.xaml" />
-    <Compile Update="SettingsWindow.xaml.cs" DependentUpon="SettingsWindow.xaml" />
-    <Compile Update="TutorialWindow.xaml.cs" DependentUpon="TutorialWindow.xaml" />
-    <Compile Update="WelcomeWindow.xaml.cs" DependentUpon="WelcomeWindow.xaml" />
+    <Compile Update="Windows\MainWindow\MainWindow.xaml.cs" DependentUpon="MainWindow.xaml" />
+    <Compile Update="Windows\PopupWindow\PopupWindow.xaml.cs" DependentUpon="PopupWindow.xaml" />
+    <Compile Update="Windows\SettingsWindow\SettingsWindow.xaml.cs" DependentUpon="SettingsWindow.xaml" />
+    <Compile Update="Windows\TutorialWindow\TutorialWindow.xaml.cs" DependentUpon="TutorialWindow.xaml" />
+    <Compile Update="Windows\WelcomeWindow\WelcomeWindow.xaml.cs" DependentUpon="WelcomeWindow.xaml" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="ui\**\*" />
+    <EmbeddedResource Include="Windows\**\*.html" />
+    <EmbeddedResource Include="Windows\**\*.js" />
+    <EmbeddedResource Include="Windows\**\*.css" />
   </ItemGroup>
 </Project>

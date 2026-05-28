@@ -44,3 +44,5 @@ secrets.json
 # Misc
 *.db
 *.cache
+/.agents
+/node_modules

@@ -1,0 +1,28 @@
+<Window x:Class="ReWrite.PopupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        mc:Ignorable="d"
+        Title="ReWrite Assistant" Height="360" Width="460"
+        WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="False" Background="#0F1115"
+        Topmost="True" ShowInTaskbar="False" WindowStartupLocation="Manual"
+        Deactivated="Window_Deactivated">
+    
+    <Grid>
+        <!-- WebView2 Web Control -->
+        <wv2:WebView2 Name="webViewControl" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+
+        <!-- WPF loading overlay to avoid blank WebView2 flash -->
+        <Border x:Name="LoadingOverlay" Background="#0F1115">
+            <Grid>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock Text="Dang tai giao dien..." FontSize="12" Foreground="#9CA3AF" HorizontalAlignment="Center" />
+                    <ProgressBar Height="6" Width="180" Margin="0,10,0,0" IsIndeterminate="True"
+                                 Foreground="#EC4899" Background="#1B1F27" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

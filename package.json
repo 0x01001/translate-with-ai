@@ -1,0 +1,24 @@
+{
+  "name": "rewrite",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx @tailwindcss/cli -i ./ui/input.css -o ./ui/tailwind.css --minify",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hynady/ReWrite.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hynady/ReWrite/issues"
+  },
+  "homepage": "https://github.com/hynady/ReWrite#readme",
+  "description": "",
+  "dependencies": {
+    "tailwindcss": "^4.3.0"
+  }
+}

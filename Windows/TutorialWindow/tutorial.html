@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ReWrite Tutorial</title>
+    <link rel="stylesheet" href="tailwind.css">
+</head>
+<body class="bg-transparent text-gray-100 overflow-hidden font-sans select-none antialiased">
+    <div class="w-screen h-screen flex flex-col gap-4 p-[18px] bg-gradient-to-b from-[#0F1115]/95 to-[#0F1115]/85 border border-white/8 rounded-2xl">
+        <!-- Header -->
+        <header class="flex items-center justify-between gap-4 shrink-0">
+            <div class="flex items-center gap-2">
+                <img class="w-8 h-8 object-contain drop-shadow-[0_0_8px_rgba(236,72,153,0.2)]" src="logo.png" alt="logo">
+                <div>
+                    <div class="text-[13px] font-bold text-gray-100">Hướng dẫn sử dụng ReWrite</div>
+                    <div class="text-[10px] text-gray-400">Xem video giới thiệu nhanh về các tính năng chính.</div>
+                </div>
+            </div>
+            <button class="flex items-center justify-center py-1.5 px-3 bg-white/5 border border-white/5 hover:bg-white/8 text-white rounded-lg text-[10px] font-semibold cursor-pointer transition-all active:scale-[0.98]" id="btn-close-header">Đóng</button>
+        </header>
+
+        <!-- Body -->
+        <section class="flex-1 flex items-stretch">
+            <div class="flex-1 relative rounded-xl overflow-hidden border border-white/8 bg-white/2 shadow-[0_12px_30px_rgba(0,0,0,0.35)]">
+                <iframe
+                    class="w-full h-full border-none block hidden"
+                    id="tutorial-video"
+                    title="ReWrite tutorial video"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen>
+                </iframe>
+                <div class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-center text-gray-400 p-3" id="video-placeholder">
+                    <div class="text-[12px] font-semibold text-gray-200">Chưa gắn video</div>
+                    <div class="text-[10px] text-gray-400">Bạn có thể gắn link YouTube embed qua query ?video=... hoặc localStorage.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="flex justify-end gap-2 shrink-0">
+            <button class="flex items-center justify-center py-1.5 px-4 bg-white/5 border border-white/5 hover:bg-white/8 text-white rounded-lg text-[10.5px] font-semibold cursor-pointer transition-all active:scale-[0.98]" id="btn-skip">Để sau</button>
+            <button class="flex items-center justify-center py-1.5 px-5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-lg text-[10.5px] cursor-pointer transition-all active:scale-[0.98] shadow-[0_2px_6px_rgba(99,102,241,0.25)]" id="btn-close">Bắt đầu dùng ReWrite</button>
+        </footer>
+    </div>
+
+    <script src="tutorial.js"></script>
+</body>
+</html>
