@@ -48,3 +48,4 @@ secrets.json
 /node_modules
 /release
 /.github/skills
+/installer

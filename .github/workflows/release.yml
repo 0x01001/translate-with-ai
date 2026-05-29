@@ -36,6 +36,13 @@ jobs:
       - name: Publish
         run: dotnet publish -c Release -r win-x64 -o release
 
+      - name: Compile .ISS to .EXE Installer
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+        with:
+          path: ReWrite.iss
+          # Pass AppVersion to preprocessor and force output dir/filename to a known value
+          options: "/DAppVersion=${{ steps.version.outputs.VERSION }} /Oinstaller /FReWrite-Setup-v${{ steps.version.outputs.VERSION }}"
+
       # 👉 lấy version từ EXE
       - name: Get version
         id: version
@@ -48,12 +55,9 @@ jobs:
       - name: Rename EXE
         run: |
           $version = "${{ steps.version.outputs.VERSION }}"
-          Rename-Item "release/ReWrite.exe" "ReWrite-v$version.exe"
+          Rename-Item "release/ReWrite.exe" "release/ReWrite-Portable-v$version.exe"
 
-      # 👉 zip lại
-      - name: Create ZIP
-        run: |
-          Compress-Archive -Path release\* -DestinationPath ReWrite.zip
+      # The Inno Setup Action compiles the .iss and writes the installer into the repo workspace.
 
       # 👉 create release + upload file
       - name: Create Release
@@ -62,7 +66,7 @@ jobs:
           tag_name: v${{ steps.version.outputs.VERSION }}
           name: ReWrite v${{ steps.version.outputs.VERSION }}
           files: |
-            release/ReWrite-v${{ steps.version.outputs.VERSION }}.exe
-            ReWrite.zip
+            release/ReWrite-Portable-v${{ steps.version.outputs.VERSION }}.exe
+            installer/ReWrite-Setup-v${{ steps.version.outputs.VERSION }}.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

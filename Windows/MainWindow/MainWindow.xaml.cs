@@ -38,10 +38,6 @@ namespace ReWrite
             this.Height = 0;
             this.ShowInTaskbar = false;
 
-            // Auto-start on boot right after installation (first-run logic)
-            if (!StartupManager.IsAutostartEnabled())
-                StartupManager.EnableAutostart();
-
             InitializeTrayIcon();
             // Localize tray/menu and update on locale change
             UpdateLocalization();
