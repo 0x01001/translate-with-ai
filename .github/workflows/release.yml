@@ -46,7 +46,7 @@ jobs:
       - name: Rename EXE
         run: |
           $version = "${{ steps.version.outputs.VERSION }}"
-          Rename-Item "release/ReWrite.exe" "release/ReWrite-Portable-v$version.exe"
+          Rename-Item "release/ReWrite.exe" "ReWrite-Portable-v$version.exe"
 
       - name: Compile .ISS to .EXE Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
