@@ -51,7 +51,7 @@ AppMutex=ReWriteMutex
 LicenseFile=LICENSE.txt
 
 [Files]
-Source: "release\ReWrite-v{#AppVersion}.exe"; DestDir: "{app}"; DestName: "{#AppExeName}"; Flags: ignoreversion
+Source: "release\ReWrite-Portable-v{#AppVersion}.exe"; DestDir: "{app}"; DestName: "{#AppExeName}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"

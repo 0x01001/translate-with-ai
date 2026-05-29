@@ -43,16 +43,16 @@ jobs:
           $version = (Get-Item $exe).VersionInfo.FileVersion
           echo "VERSION=$version" >> $env:GITHUB_OUTPUT
 
+      - name: Rename EXE
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          Rename-Item "release/ReWrite.exe" "release/ReWrite-Portable-v$version.exe"
+
       - name: Compile .ISS to .EXE Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         with:
           path: ReWrite.iss
           options: "/DAppVersion=${{ steps.version.outputs.VERSION }} /Oinstaller /FReWrite-Setup-v${{ steps.version.outputs.VERSION }}"
-
-      - name: Rename EXE
-        run: |
-          $version = "${{ steps.version.outputs.VERSION }}"
-          Rename-Item "release/ReWrite.exe" "release/ReWrite-Portable-v$version.exe"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
