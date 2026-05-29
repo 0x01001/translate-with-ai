@@ -27,6 +27,10 @@ namespace ReWrite
             webView = (Microsoft.Web.WebView2.Wpf.WebView2)FindName("webViewControl");
             _parent = parent;
 
+            // Keep host chrome in sync with the current locale.
+            UpdateLocalization();
+            Localization.LocaleChanged += OnLocaleChanged;
+
             if (LoadingOverlay != null)
                 LoadingOverlay.Visibility = Visibility.Visible;
             webView.Visibility = Visibility.Hidden;
@@ -43,6 +47,21 @@ namespace ReWrite
             InitializeWebViewAsync();
         }
 
+        private void OnLocaleChanged(string locale)
+        {
+            System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                UpdateLocalization();
+                SendLocaleToWebView(locale);
+            }));
+        }
+
+        private void UpdateLocalization()
+        {
+            try { this.Title = Localization.Get("title.popup"); } catch { }
+            try { LoadingText.Text = Localization.Get("loading"); } catch { }
+        }
+
         // ── WebView2 initialisation ───────────────────────────────────────────────
 
         private async void InitializeWebViewAsync()
@@ -55,12 +74,19 @@ namespace ReWrite
                 webView.DefaultBackgroundColor = System.Drawing.Color.FromArgb(15, 17, 21); // #0F1115
 
                 EmbeddedUiContent.ConfigureWebView(webView.CoreWebView2);
+                webView.WebMessageReceived += WebView_WebMessageReceived;
 
                 if (LoadingOverlay != null)
                     LoadingOverlay.Visibility = Visibility.Visible;
 
-                webView.WebMessageReceived += WebView_WebMessageReceived;
                 webView.Source = new Uri("https://rewrite.local/popup.html");
+                // Send current locale to frontend so it can load translations
+                try
+                {
+                    var localePayload = new { @event = "set_locale", locale = Localization.CurrentLocale };
+                    webView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(localePayload));
+                }
+                catch { }
                 // Pending text will be delivered after ui_ready arrives from the front-end
             }
             catch (Exception ex)
@@ -117,6 +143,7 @@ namespace ReWrite
                 {
                     _uiReady = true;
                     HideLoadingOverlay();
+                    SendLocaleToWebView(Localization.CurrentLocale);
 
                     // Flush any text / settings queued before the UI was ready
                     if (!string.IsNullOrEmpty(_pendingText) || _pendingSettings)
@@ -125,6 +152,17 @@ namespace ReWrite
                         _pendingText     = "";
                         _pendingSettings = false;
                     }
+                    return;
+                }
+
+                if (action == "request_locale")
+                {
+                    try
+                    {
+                        var payload = new { @event = "set_locale", locale = Localization.CurrentLocale };
+                        webView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(payload));
+                    }
+                    catch { }
                     return;
                 }
 
@@ -260,6 +298,20 @@ namespace ReWrite
             ClampToScreen();
         }
 
+        // Allow host to push locale changes to the webview at runtime
+        public void SendLocaleToWebView(string locale)
+        {
+            try
+            {
+                if (webView?.CoreWebView2 != null)
+                {
+                    var payload = new { @event = "set_locale", locale };
+                    webView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(payload));
+                }
+            }
+            catch { }
+        }
+
         // ── Window chrome (rounded corners) ───────────────────────────────────────
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -276,6 +328,12 @@ namespace ReWrite
                     sizeof(int));
             }
             catch { }
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            Localization.LocaleChanged -= OnLocaleChanged;
+            base.OnClosed(e);
         }
     }
 }

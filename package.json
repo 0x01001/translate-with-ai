@@ -4,6 +4,8 @@
   "main": "index.js",
   "scripts": {
     "build": "npx @tailwindcss/cli -i ./ui/input.css -o ./ui/tailwind.css --minify",
+    "check:i18n": "node scripts/check_locale_keys.js",
+    "check:i18n:scaffold": "node scripts/check_locale_keys.js --scaffold",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

@@ -59,4 +59,8 @@
     <EmbeddedResource Include="Windows\**\*.js" />
     <EmbeddedResource Include="Windows\**\*.css" />
   </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Core\Localization\locales\**\*.json" />
+  </ItemGroup>
 </Project>

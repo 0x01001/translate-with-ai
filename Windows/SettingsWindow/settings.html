@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cấu hình ReWrite</title>
+    <title data-i18n="title.settings">ReWrite Settings</title>
     <link rel="stylesheet" href="https://rewrite.local/tailwind.css">
 </head>
 
@@ -16,8 +16,8 @@
                 <img class="w-8 h-8 object-contain drop-shadow-[0_0_8px_rgba(236,72,153,0.2)]"
                     src="https://rewrite.local/logo.png" alt="logo">
                 <h1
-                    class="text-sm font-semibold tracking-wider bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                    ReWrite Cấu Hình</h1>
+                    class="text-sm font-semibold tracking-wider bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent"
+                    data-i18n="settings.title">ReWrite Cấu Hình</h1>
             </div>
         </header>
 
@@ -27,83 +27,93 @@
 
                 <!-- Gemini Settings Group -->
                 <div class="bg-white/2 border border-white/5 rounded-xl p-3 flex flex-col gap-2">
-                    <h3 class="text-[11.5px] font-bold text-indigo-400 uppercase tracking-wider">Dịch vụ Gemini (Khuyên
-                        dùng - Cực nhanh)</h3>
+                    <h3 class="text-[11.5px] font-bold text-indigo-400 uppercase tracking-wider" data-i18n="settings.group_gemini">Gemini Service (Recommended)</h3>
 
                     <div class="grid grid-cols-4 items-center gap-3">
-                        <label class="col-span-1 text-[10.5px] text-gray-400" for="gemini-key">API Key</label>
+                        <label class="col-span-1 text-[10.5px] text-gray-400" for="gemini-key" data-i18n="settings.gemini_key_label">API Key</label>
                         <input
                             class="col-span-3 bg-white/4 border border-white/5 text-gray-200 px-2 py-1.5 rounded-md text-[11px] outline-none hover:border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
-                            type="password" id="gemini-key" placeholder="Nhập Gemini API key của bạn...">
+                            type="password" id="gemini-key" data-i18n-placeholder="settings.gemini_key_placeholder" placeholder="Nhập Gemini API key của bạn...">
                     </div>
 
                     <div class="grid grid-cols-4 items-center gap-3">
-                        <label class="col-span-1 text-[10.5px] text-gray-400" for="gemini-model">Model Name</label>
+                        <label class="col-span-1 text-[10.5px] text-gray-400" for="gemini-model" data-i18n="settings.gemini_model_label">Model Name</label>
                         <input
                             class="col-span-3 bg-white/4 border border-white/5 text-gray-200 px-2 py-1.5 rounded-md text-[11px] outline-none hover:border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
                             type="text" id="gemini-model" value="gemini-1.5-flash"
-                            placeholder="gemini-1.5-flash hoặc gemini-1.5-pro">
+                            data-i18n-placeholder="settings.gemini_model_placeholder" placeholder="gemini-1.5-flash hoặc gemini-1.5-pro">
                     </div>
                 </div>
 
                 <!-- OpenAI Settings Group -->
                 <div class="bg-white/2 border border-white/5 rounded-xl p-3 flex flex-col gap-2">
-                    <h3 class="text-[11.5px] font-bold text-indigo-400 uppercase tracking-wider">Dịch vụ OpenAI</h3>
+                    <h3 class="text-[11.5px] font-bold text-indigo-400 uppercase tracking-wider" data-i18n="settings.group_openai">OpenAI Service</h3>
 
                     <div class="grid grid-cols-4 items-center gap-3">
-                        <label class="col-span-1 text-[10.5px] text-gray-400" for="openai-key">API Key</label>
+                        <label class="col-span-1 text-[10.5px] text-gray-400" for="openai-key" data-i18n="settings.openai_key_label">API Key</label>
                         <input
                             class="col-span-3 bg-white/4 border border-white/5 text-gray-200 px-2 py-1.5 rounded-md text-[11px] outline-none hover:border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
-                            type="password" id="openai-key" placeholder="Nhập OpenAI API key của bạn...">
+                            type="password" id="openai-key" data-i18n-placeholder="settings.openai_key_placeholder" placeholder="Nhập OpenAI API key của bạn...">
                     </div>
 
                     <div class="grid grid-cols-4 items-center gap-3">
-                        <label class="col-span-1 text-[10.5px] text-gray-400" for="openai-model">Model Name</label>
+                        <label class="col-span-1 text-[10.5px] text-gray-400" for="openai-model" data-i18n="settings.openai_model_label">Model Name</label>
                         <input
                             class="col-span-3 bg-white/4 border border-white/5 text-gray-200 px-2 py-1.5 rounded-md text-[11px] outline-none hover:border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
-                            type="text" id="openai-model" value="gpt-4o-mini" placeholder="gpt-4o-mini hoặc gpt-4o">
+                            type="text" id="openai-model" value="gpt-4o-mini" data-i18n-placeholder="settings.openai_model_placeholder" placeholder="gpt-4o-mini hoặc gpt-4o">
                     </div>
                 </div>
 
                 <!-- Functional Settings Group -->
                 <div class="bg-white/2 border border-white/5 rounded-xl p-3 flex flex-col gap-2">
-                    <h3 class="text-[11.5px] font-bold text-indigo-400 uppercase tracking-wider">Cấu hình chức năng</h3>
+                    <h3 class="text-[11.5px] font-bold text-indigo-400 uppercase tracking-wider" data-i18n="settings.group_function">Functional Settings</h3>
 
                     <div class="grid grid-cols-4 items-center gap-3">
-                        <label class="col-span-1 text-[10.5px] text-gray-400" for="hotkey-input">Phím tắt</label>
+                        <label class="col-span-1 text-[10.5px] text-gray-400" for="hotkey-input" data-i18n="settings.hotkey_label">Hotkey</label>
                         <input
                             class="col-span-3 bg-white/4 border border-white/5 text-gray-200 px-2 py-1.5 rounded-md text-[11px] outline-none hover:border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
-                            type="text" id="hotkey-input" placeholder="Nhấn tổ hợp phím để ghi nhận...">
+                            type="text" id="hotkey-input" data-i18n-placeholder="settings.hotkey_placeholder" placeholder="Nhấn tổ hợp phím để ghi nhận...">
                     </div>
-                    <div class="text-[9.5px] text-gray-500 -mt-1 leading-normal pl-[26%]">Đặt con trỏ vào ô trên và nhấn
-                        tổ hợp phím mong muốn (Ví dụ: Ctrl + Alt + K)</div>
+                        <div class="text-[9.5px] text-gray-500 -mt-1 leading-normal pl-[26%]" data-i18n="settings.hotkey_hint">Focus the field and press preferred key combination (e.g. Ctrl+Alt+K)</div>
                     <div class="text-[10px] text-rose-400 pl-[26%] min-h-[14px]" id="hotkey-error"></div>
 
                     <div class="grid grid-cols-4 items-center gap-3">
-                        <label class="col-span-1 text-[10.5px] text-gray-400" for="active-provider">Nhà cung cấp
-                            chính</label>
+                        <label class="col-span-1 text-[10.5px] text-gray-400" for="active-provider" data-i18n="settings.provider_label">Primary provider</label>
                         <select
                             class="col-span-3 bg-neutral-950 border border-white/5 text-gray-200 px-2 py-1.5 rounded-md text-[11px] outline-none cursor-pointer hover:bg-neutral-900 focus:border-indigo-500"
                             id="active-provider">
-                            <option value="gemini">Gemini (Google)</option>
-                            <option value="openai">OpenAI</option>
+                            <option value="gemini" data-i18n="provider.gemini">Gemini (Google)</option>
+                            <option value="openai" data-i18n="provider.openai">OpenAI</option>
                         </select>
                     </div>
+                    
+                        <div class="grid grid-cols-4 items-center gap-3 mt-2">
+                            <label class="col-span-1 text-[10.5px] text-gray-400" for="select-locale" data-i18n="settings.language">Language</label>
+                                <select id="select-locale" class="col-span-3 bg-neutral-950 border border-white/5 text-gray-200 px-2 py-1.5 rounded-md text-[11px] outline-none cursor-pointer hover:bg-neutral-900 focus:border-indigo-500">
+                                <option value="en" data-i18n="lang.en">English</option>
+                                <option value="vi" data-i18n="lang.vi">Vietnamese</option>
+                                <option value="ja" data-i18n="lang.ja">Japanese (日本語)</option>
+                                <option value="zh-CN" data-i18n="lang.zh-CN">Chinese Simplified (简体中文)</option>
+                                <option value="zh-TW" data-i18n="lang.zh-TW">Chinese Traditional (繁體中文)</option>
+                                <option value="fr" data-i18n="lang.fr">French (Français)</option>
+                                <option value="de" data-i18n="lang.de">German (Deutsch)</option>
+                                <option value="ko" data-i18n="lang.ko">Korean (한국어)</option>
+                            </select>
+                        </div>
 
                     <div class="flex items-center gap-2 mt-1 cursor-pointer select-none">
                         <input class="cursor-pointer accent-indigo-500 w-3.5 h-3.5" type="checkbox" id="system-startup"
                             checked>
-                        <label class="cursor-pointer text-[10.5px] text-gray-200 font-medium" for="system-startup">Tự
-                            động khởi động cùng Windows</label>
+                        <label class="cursor-pointer text-[10.5px] text-gray-200 font-medium" for="system-startup" data-i18n="settings.autostart">Start with Windows</label>
                     </div>
                 </div>
 
                 <div class="flex flex-col gap-1 mt-2.5">
                     <button
                         class="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-lg text-[11px] cursor-pointer transition-all active:scale-[0.98] shadow-[0_2px_6px_rgba(99,102,241,0.3)]"
-                        id="save-settings-btn">Lưu cấu hình</button>
+                        id="save-settings-btn" data-i18n="button.save_settings">Save settings</button>
                     <div class="text-[10.5px] text-emerald-400 text-center font-medium opacity-0 transition-opacity duration-300"
-                        id="settings-toast">Đã lưu cài đặt thành công!</div>
+                        id="settings-toast" data-i18n="settings.saved">Đã lưu cài đặt thành công!</div>
                 </div>
             </div>
         </main>

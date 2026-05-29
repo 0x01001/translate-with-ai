@@ -17,6 +17,9 @@ namespace ReWrite
 
         private HwndSource? _hwndSource;
         private System.Windows.Forms.NotifyIcon? _trayIcon;
+        private System.Windows.Forms.ToolStripMenuItem? _openSettingsItem;
+        private System.Windows.Forms.ToolStripMenuItem? _autostartItem;
+        private System.Windows.Forms.ToolStripMenuItem? _exitItem;
         private PopupWindow? _popupWindow;
         private SettingsWindow? _settingsWindow;
         private IntPtr _mainHwnd = IntPtr.Zero;
@@ -40,6 +43,9 @@ namespace ReWrite
                 StartupManager.EnableAutostart();
 
             InitializeTrayIcon();
+            // Localize tray/menu and update on locale change
+            UpdateLocalization();
+            Localization.LocaleChanged += OnLocaleChanged;
 
             // Warm up the popup so WebView2 loads instantly when the hotkey fires
             _popupWindow = new PopupWindow(this);
@@ -237,39 +243,58 @@ namespace ReWrite
 
             var contextMenu = new System.Windows.Forms.ContextMenuStrip();
 
-            var openSettingsItem = new System.Windows.Forms.ToolStripMenuItem("Settings & Configuration");
-            openSettingsItem.Click += (s, e) => OpenSettings();
-            contextMenu.Items.Add(openSettingsItem);
+            _openSettingsItem = new System.Windows.Forms.ToolStripMenuItem(Localization.Get("tray.open_settings"));
+            _openSettingsItem.Click += (s, e) => OpenSettings();
+            contextMenu.Items.Add(_openSettingsItem);
 
             contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
 
-            var autostartItem = new System.Windows.Forms.ToolStripMenuItem("Start with Windows")
+            _autostartItem = new System.Windows.Forms.ToolStripMenuItem(Localization.Get("tray.autostart"))
             {
                 Checked = StartupManager.IsAutostartEnabled()
             };
-            autostartItem.Click += (s, e) =>
+            _autostartItem.Click += (s, e) =>
             {
                 if (StartupManager.IsAutostartEnabled())
                 {
                     StartupManager.DisableAutostart();
-                    autostartItem.Checked = false;
+                    if (_autostartItem != null) _autostartItem.Checked = false;
                 }
                 else
                 {
                     StartupManager.EnableAutostart();
-                    autostartItem.Checked = true;
+                    if (_autostartItem != null) _autostartItem.Checked = true;
                 }
             };
-            contextMenu.Items.Add(autostartItem);
+            contextMenu.Items.Add(_autostartItem);
 
             contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
 
-            var exitItem = new System.Windows.Forms.ToolStripMenuItem("Exit");
-            exitItem.Click += (s, e) => ExitApp();
-            contextMenu.Items.Add(exitItem);
+            _exitItem = new System.Windows.Forms.ToolStripMenuItem(Localization.Get("tray.exit"));
+            _exitItem.Click += (s, e) => ExitApp();
+            contextMenu.Items.Add(_exitItem);
 
             _trayIcon.ContextMenuStrip = contextMenu;
             _trayIcon.DoubleClick += (s, e) => OpenSettings();
+        }
+
+        private void OnLocaleChanged(string locale)
+        {
+            System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() => UpdateLocalization()));
+        }
+
+        private void UpdateLocalization()
+        {
+            try
+            {
+                if (_trayIcon != null)
+                    _trayIcon.Text = Localization.Get("tray.tooltip");
+            }
+            catch { }
+
+            try { if (_openSettingsItem != null) _openSettingsItem.Text = Localization.Get("tray.open_settings"); } catch { }
+            try { if (_autostartItem != null) _autostartItem.Text = Localization.Get("tray.autostart"); } catch { }
+            try { if (_exitItem != null) _exitItem.Text = Localization.Get("tray.exit"); } catch { }
         }
 
         private static System.Drawing.Icon CreateTrayIcon()

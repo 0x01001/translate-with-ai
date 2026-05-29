@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ReWrite Assistant</title>
+    <title data-i18n="title.popup">ReWrite Assistant</title>
     <link rel="stylesheet" href="https://rewrite.local/tailwind.css">
     <style>
         /* PANEL */
@@ -96,10 +96,10 @@
                 <div style="display:flex;align-items:center;gap:6px;min-width:0;"><img
                         src="https://rewrite.local/logo.png"
                         style="width:16px;height:16px;object-fit:contain;border-radius:4px;opacity:0.9;" /><span
-                        style="font-size:12px;font-weight:600;letter-spacing:0.4px;color:#ffffff;text-transform:uppercase;white-space:nowrap;">ReWrite</span>
+                    style="font-size:12px;font-weight:600;letter-spacing:0.4px;color:#ffffff;text-transform:uppercase;white-space:nowrap;" data-i18n="app.name">ReWrite</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;"><span id="model-label"
-                        style="font-size:11px;color:rgba(255,255,255,0.55);letter-spacing:0.2px;">Powered by AI</span>
+                    style="font-size:11px;color:rgba(255,255,255,0.55);letter-spacing:0.2px;" data-i18n="label.model">Powered by AI</span>
                 </div>
             </div>
 
@@ -116,7 +116,7 @@
                         <path
                             d="M12.983 21.186a1 1 0 0 1-1.966 0 10 10 0 0 0-8.203-8.203 1 1 0 0 1 0-1.966 10 10 0 0 0 8.203-8.203 1 1 0 0 1 1.966 0 10 10 0 0 0 8.203 8.203 1 1 0 0 1 0 1.966 10 10 0 0 0-8.203 8.203" />
                     </svg>
-                    <span class="truncate">Viết lại</span>
+                    <span class="truncate" data-i18n="tab.rewrite">Viết lại</span>
                 </button>
 
                 <button
@@ -132,7 +132,7 @@
                         <path d="m2.3 2.3 7.286 7.286" />
                         <circle cx="11" cy="11" r="2" />
                     </svg>
-                    <span class="truncate">Soạn thảo</span>
+                    <span class="truncate" data-i18n="tab.write">Soạn thảo</span>
                 </button>
 
                 <button
@@ -148,7 +148,7 @@
                         <path d="m22 22-5-10-5 10" />
                         <path d="M14 18h6" />
                     </svg>
-                    <span class="truncate">Dịch thuật</span>
+                    <span class="truncate" data-i18n="tab.translate">Dịch thuật</span>
                 </button>
 
                 <button
@@ -161,7 +161,7 @@
                         <path d="M3 3v5h5" />
                         <path d="M12 7v5l4 2" />
                     </svg>
-                    <span class="truncate">Lịch sử</span>
+                    <span class="truncate" data-i18n="tab.history">Lịch sử</span>
                 </button>
 
             </nav>
@@ -173,74 +173,70 @@
             <!-- Rewrite Tab -->
             <section id="tab-rewrite" class="tab-pane active hidden animate-fadeIn">
                 <div class="mb-2.5" id="source-bubble-wrapper">
-                    <span class="block text-[9px] text-gray-400 uppercase tracking-wider font-semibold mb-1">Văn bản đã
-                        chọn:</span>
+                    <span class="block text-[9px] text-gray-400 uppercase tracking-wider font-semibold mb-1 " data-i18n="popup.selected_label">
+                        Văn bản đã chọn:</span>
                     <div class="text-[11px] leading-relaxed bg-white/3 border border-white/5 p-2 rounded-lg max-h-[50px] overflow-y-auto text-gray-200 whitespace-pre-wrap break-all"
-                        id="source-preview">Đang chờ văn bản...</div>
+                        id="source-preview" data-i18n="popup.no_selection">Đang chờ văn bản...</div>
                 </div>
 
                 <div class="advanced-options-wrapper mb-2.5" id="rewrite-advanced-options-wrapper">
-                    <button
+                        <button
                         class="advanced-toggle-btn w-full flex items-center gap-2 bg-white/3 border border-white/5 hover:bg-white/6 hover:text-white text-gray-400 py-1.5 px-3 rounded-lg text-[10.5px] cursor-pointer transition-all"
                         id="rewrite-advanced-toggle-btn">
                         <svg class="expand-icon w-3.5 h-3.5 transition-transform duration-250" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M7 10l5 5 5-5z" />
                         </svg>
-                        <span>Tùy chỉnh nâng cao</span>
+                        <span data-i18n="button.advanced_toggle">Tùy chỉnh nâng cao</span>
                     </button>
 
                     <div class="advanced-options-panel max-h-0 opacity-0 overflow-hidden transition-all duration-300 ease-in-out"
                         id="rewrite-advanced-options-panel">
                         <div class="grid grid-cols-3 gap-2 mt-2 mb-2">
                             <div class="flex flex-col gap-1">
-                                <label class="text-[9.5px] font-medium text-gray-400" for="rewrite-param-tone">Tone
-                                    giọng</label>
+                                <label class="text-[9.5px] font-medium text-gray-400" for="rewrite-param-tone"><span data-i18n="label.tone">Tone giọng</span></label>
                                 <select
                                     class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500"
                                     id="rewrite-param-tone">
-                                    <option value="" selected>Mặc định</option>
-                                    <option value="professional">Chuyên nghiệp</option>
-                                    <option value="casual">Thân thiện, gần gũi</option>
-                                    <option value="academic">Học thuật, trang trọng</option>
-                                    <option value="creative">Sáng tạo, phong phú</option>
-                                    <option value="humorous">Hài hước, vui vẻ</option>
-                                    <option value="direct">Thẳng thắn, ngắn gọn</option>
+                                    <option value="" selected data-i18n="option.default">Mặc định</option>
+                                    <option value="professional" data-i18n="tone.professional">Chuyên nghiệp</option>
+                                    <option value="casual" data-i18n="tone.casual">Thân thiện, gần gũi</option>
+                                    <option value="academic" data-i18n="tone.academic">Học thuật, trang trọng</option>
+                                    <option value="creative" data-i18n="tone.creative">Sáng tạo, phong phú</option>
+                                    <option value="humorous" data-i18n="tone.humorous">Hài hước, vui vẻ</option>
+                                    <option value="direct" data-i18n="tone.direct">Thẳng thắn, ngắn gọn</option>
                                 </select>
                             </div>
                             <div class="flex flex-col gap-1">
-                                <label class="text-[9.5px] font-medium text-gray-400" for="rewrite-param-format">Định
-                                    dạng</label>
+                                <label class="text-[9.5px] font-medium text-gray-400" for="rewrite-param-format"><span data-i18n="label.format">Định dạng</span></label>
                                 <select
                                     class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500"
                                     id="rewrite-param-format">
-                                    <option value="" selected>Mặc định</option>
-                                    <option value="paragraph">Đoạn văn</option>
-                                    <option value="bullets">Danh sách</option>
-                                    <option value="email">Thư điện tử (Email)</option>
-                                    <option value="short">Tin nhắn ngắn</option>
-                                    <option value="essay">Bài viết dài</option>
+                                    <option value="" selected data-i18n="option.default">Mặc định</option>
+                                    <option value="paragraph" data-i18n="format.paragraph">Đoạn văn</option>
+                                    <option value="bullets" data-i18n="format.bullets">Danh sách</option>
+                                    <option value="email" data-i18n="format.email">Thư điện tử (Email)</option>
+                                    <option value="short" data-i18n="format.short">Tin nhắn ngắn</option>
+                                    <option value="essay" data-i18n="format.essay">Bài viết dài</option>
                                 </select>
                             </div>
                             <div class="flex flex-col gap-1">
-                                <label class="text-[9.5px] font-medium text-gray-400" for="rewrite-param-length">Độ
-                                    dài</label>
+                                <label class="text-[9.5px] font-medium text-gray-400" for="rewrite-param-length"><span data-i18n="label.length">Độ dài</span></label>
                                 <select
                                     class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500"
                                     id="rewrite-param-length">
-                                    <option value="" selected>Mặc định</option>
-                                    <option value="short">Ngắn</option>
-                                    <option value="medium">Vừa phải</option>
-                                    <option value="long">Dài hơn</option>
+                                    <option value="" selected data-i18n="option.default">Mặc định</option>
+                                    <option value="short" data-i18n="length.short">Ngắn</option>
+                                    <option value="medium" data-i18n="length.medium">Vừa phải</option>
+                                    <option value="long" data-i18n="length.long">Dài hơn</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="flex flex-col gap-1">
-                            <label class="text-[9.5px] font-medium text-gray-400" for="rewrite-prompt-input">Yêu cầu bổ
-                                sung</label>
+                            <label class="text-[9.5px] font-medium text-gray-400" for="rewrite-prompt-input"><span data-i18n="label.rewrite_prompt">Yêu cầu bổ sung</span></label>
                             <textarea
                                 class="w-full h-11 bg-white/4 border border-white/5 rounded-lg p-2 text-[10.5px] text-gray-200 outline-none resize-none hover:border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
-                                id="rewrite-prompt-input" placeholder="Ví dụ: Giữ nguyên văn phong gốc..."></textarea>
+                                id="rewrite-prompt-input" data-i18n-placeholder="placeholder.rewrite_example" placeholder="Ví dụ: Giữ nguyên văn phong gốc..."></textarea>
                         </div>
                     </div>
                 </div>
@@ -249,12 +245,11 @@
             <!-- Write Tab -->
             <section id="tab-write" class="tab-pane hidden animate-fadeIn">
                 <div class="flex flex-col gap-1 mb-2.5">
-                    <label class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider"
-                        for="write-prompt-input">Chủ đề cần soạn thảo <span class="text-rose-400">*</span></label>
+                    <label class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider" for="write-prompt-input"><span data-i18n="label.write_topic">Chủ đề cần soạn thảo</span> <span class="text-rose-400">*</span></label>
                     <textarea
                         class="w-full h-12 bg-white/4 border border-white/5 rounded-lg p-2 text-[11px] text-gray-200 outline-none resize-none hover:border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
                         id="write-prompt-input"
-                        placeholder="Nhập chủ đề hoặc hướng dẫn soạn thảo tại đây..."></textarea>
+                        data-i18n-placeholder="placeholder.write_topic">Nhập chủ đề hoặc hướng dẫn soạn thảo tại đây...</textarea>
                 </div>
 
                 <div class="advanced-options-wrapper mb-2.5" id="write-advanced-options-wrapper">
@@ -264,51 +259,48 @@
                         <svg class="expand-icon w-3.5 h-3.5 transition-transform duration-250" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M7 10l5 5 5-5z" />
                         </svg>
-                        <span>Tùy chỉnh nâng cao</span>
+                        <span data-i18n="button.advanced_toggle">Tùy chỉnh nâng cao</span>
                     </button>
 
                     <div class="advanced-options-panel max-h-0 opacity-0 overflow-hidden transition-all duration-300 ease-in-out"
                         id="write-advanced-options-panel">
                         <div class="grid grid-cols-3 gap-2 mt-2">
                             <div class="flex flex-col gap-1">
-                                <label class="text-[9.5px] font-medium text-gray-400" for="write-param-tone">Tone
-                                    giọng</label>
+                                <label class="text-[9.5px] font-medium text-gray-400" for="write-param-tone"><span data-i18n="label.tone">Tone giọng</span></label>
                                 <select
                                     class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500"
                                     id="write-param-tone">
-                                    <option value="" selected>Mặc định</option>
-                                    <option value="professional">Chuyên nghiệp</option>
-                                    <option value="casual">Thân thiện, gần gũi</option>
-                                    <option value="academic">Học thuật, trang trọng</option>
-                                    <option value="creative">Sáng tạo, phong phú</option>
-                                    <option value="humorous">Hài hước, vui vẻ</option>
-                                    <option value="direct">Thẳng thắn, ngắn gọn</option>
+                                    <option value="" selected data-i18n="option.default">Mặc định</option>
+                                    <option value="professional" data-i18n="tone.professional">Chuyên nghiệp</option>
+                                    <option value="casual" data-i18n="tone.casual">Thân thiện, gần gũi</option>
+                                    <option value="academic" data-i18n="tone.academic">Học thuật, trang trọng</option>
+                                    <option value="creative" data-i18n="tone.creative">Sáng tạo, phong phú</option>
+                                    <option value="humorous" data-i18n="tone.humorous">Hài hước, vui vẻ</option>
+                                    <option value="direct" data-i18n="tone.direct">Thẳng thắn, ngắn gọn</option>
                                 </select>
                             </div>
                             <div class="flex flex-col gap-1">
-                                <label class="text-[9.5px] font-medium text-gray-400" for="write-param-format">Định
-                                    dạng</label>
+                                <label class="text-[9.5px] font-medium text-gray-400" for="write-param-format"><span data-i18n="label.format">Định dạng</span></label>
                                 <select
                                     class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500"
                                     id="write-param-format">
-                                    <option value="" selected>Mặc định</option>
-                                    <option value="paragraph">Đoạn văn</option>
-                                    <option value="bullets">Danh sách</option>
-                                    <option value="email">Thư điện tử (Email)</option>
-                                    <option value="short">Tin nhắn ngắn</option>
-                                    <option value="essay">Bài viết dài</option>
+                                    <option value="" selected data-i18n="option.default">Mặc định</option>
+                                    <option value="paragraph" data-i18n="format.paragraph">Đoạn văn</option>
+                                    <option value="bullets" data-i18n="format.bullets">Danh sách</option>
+                                    <option value="email" data-i18n="format.email">Thư điện tử (Email)</option>
+                                    <option value="short" data-i18n="format.short">Tin nhắn ngắn</option>
+                                    <option value="essay" data-i18n="format.essay">Bài viết dài</option>
                                 </select>
                             </div>
                             <div class="flex flex-col gap-1">
-                                <label class="text-[9.5px] font-medium text-gray-400" for="write-param-length">Độ
-                                    dài</label>
+                                <label class="text-[9.5px] font-medium text-gray-400" for="write-param-length"><span data-i18n="label.length">Độ dài</span></label>
                                 <select
                                     class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-md text-[10px] outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500"
                                     id="write-param-length">
-                                    <option value="" selected>Mặc định</option>
-                                    <option value="short">Ngắn</option>
-                                    <option value="medium">Vừa phải</option>
-                                    <option value="long">Dài hơn</option>
+                                    <option value="" selected data-i18n="option.default">Mặc định</option>
+                                    <option value="short" data-i18n="length.short">Ngắn</option>
+                                    <option value="medium" data-i18n="length.medium">Vừa phải</option>
+                                    <option value="long" data-i18n="length.long">Dài hơn</option>
                                 </select>
                             </div>
                         </div>
@@ -319,24 +311,24 @@
             <!-- Translate Tab -->
             <section id="tab-translate" class="tab-pane hidden animate-fadeIn">
                 <div class="mb-2.5">
-                    <span class="block text-[9px] text-gray-400 uppercase tracking-wider font-semibold mb-1">
-                        Văn bản cần dịch:</span>
+                    <span class="block text-[9px] text-gray-400 uppercase tracking-wider font-semibold mb-1" data-i18n="label.translate_source">Văn bản cần dịch:</span>
                     <div class="text-[11.5px] leading-relaxed bg-white/3 border border-white/5 p-2 rounded-lg max-h-[50px] overflow-y-auto text-gray-200 whitespace-pre-wrap break-all"
-                        id="translate-source-preview">Bôi đen văn bản cần dịch ngoài màn hình...</div>
+                        id="translate-source-preview" data-i18n="popup.no_selection">Bôi đen văn bản cần dịch ngoài màn hình...</div>
                 </div>
 
                 <div class="flex flex-col gap-1 mb-2.5">
-                    <label class="text-[9.5px] font-medium text-gray-400" for="param-lang">Dịch sang ngôn ngữ</label>
+                    <label class="text-[9.5px] font-medium text-gray-400" for="param-lang"><span data-i18n="label.translate_to">Dịch sang ngôn ngữ</span></label>
                     <select
                         class="bg-neutral-900 border border-white/5 text-gray-200 p-1.5 rounded-lg text-xs outline-none cursor-pointer hover:bg-neutral-800 focus:border-indigo-500 w-full"
                         id="param-lang">
-                        <option value="Tiếng Việt" selected>Tiếng Việt</option>
-                        <option value="Tiếng Anh">Tiếng Anh (English)</option>
-                        <option value="Tiếng Nhật">Tiếng Nhật (日本語)</option>
-                        <option value="Tiếng Trung Quốc">Tiếng Trung Quốc (中文)</option>
-                        <option value="Tiếng Pháp">Tiếng Pháp (Français)</option>
-                        <option value="Tiếng Đức">Tiếng Đức (Deutsch)</option>
-                        <option value="Tiếng Hàn">Tiếng Hàn (한국어)</option>
+                        <option value="Tiếng Việt" selected data-i18n="lang.vi">Tiếng Việt</option>
+                        <option value="Tiếng Anh" data-i18n="lang.en">Tiếng Anh (English)</option>
+                        <option value="Tiếng Nhật" data-i18n="lang.ja">Tiếng Nhật (日本語)</option>
+                        <option value="Tiếng Trung giản thể" data-i18n="lang.zh-CN">Tiếng Trung giản thể (简体中文)</option>
+                        <option value="Tiếng Trung phồn thể" data-i18n="lang.zh-TW">Tiếng Trung phồn thể (繁體中文)</option>
+                        <option value="Tiếng Pháp" data-i18n="lang.fr">Tiếng Pháp (Français)</option>
+                        <option value="Tiếng Đức" data-i18n="lang.de">Tiếng Đức (Deutsch)</option>
+                        <option value="Tiếng Hàn" data-i18n="lang.ko">Tiếng Hàn (한국어)</option>
                     </select>
                 </div>
             </section>
@@ -345,14 +337,13 @@
             <section id="tab-history" class="tab-pane hidden animate-fadeIn">
                 <div class="bg-white/2 border border-white/5 rounded-xl p-3 flex flex-col gap-2 mb-2.5">
                     <div class="flex justify-between items-center pb-2 border-b border-white/5">
-                        <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Lịch sử tạm
-                            thời</span>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold" data-i18n="popup.history_title">Lịch sử tạm thời</span>
                         <button
                             class="bg-white/5 border border-white/5 hover:bg-white/8 text-[9px] px-2 py-0.5 rounded-md cursor-pointer font-semibold transition-all"
-                            id="btn-clear-history">Xóa sạch</button>
+                            id="btn-clear-history" data-i18n="popup.clear_history">Xóa sạch</button>
                     </div>
                     <div class="flex flex-col gap-2 max-h-[170px] overflow-y-auto pr-1" id="history-list">
-                        <div class="text-[11px] text-gray-500 text-center py-4" id="history-empty">Chưa có bản lưu nào
+                        <div class="text-[11px] text-gray-500 text-center py-4" id="history-empty" data-i18n="popup.history_empty">Chưa có bản lưu nào
                             để hiển thị.</div>
                     </div>
                 </div>
@@ -362,20 +353,19 @@
             <section class="flex flex-col shrink-0 mb-1 animate-slideUp" id="result-container" style="display: none;">
                 <div class="flex justify-between items-center mb-1.5 gap-2">
                     <div class="flex flex-col">
-                        <span class="text-[9px] font-semibold text-gray-400 uppercase tracking-wider">Kết quả từ
-                            AI</span>
-                        <span class="text-[10px] text-gray-200/80" id="result-meta">Đang chuẩn bị...</span>
+                        <span class="text-[9px] font-semibold text-gray-400 uppercase tracking-wider" data-i18n="popup.result_title">Kết quả từ AI</span>
+                        <span class="text-[10px] text-gray-200/80" id="result-meta" data-i18n="popup.result_preparing">Đang chuẩn bị...</span>
                     </div>
                     <div class="flex gap-1.5 items-center">
                         <button
                             class="bg-transparent text-gray-400 hover:text-white px-2 py-0.5 rounded text-[9.5px] font-semibold transition-all"
-                            id="btn-show-result">Kết quả</button>
+                            id="btn-show-result"><span data-i18n="button.show_result">Kết quả</span></button>
                         <button
                             class="bg-transparent text-gray-400 hover:text-white px-2 py-0.5 rounded text-[9.5px] font-semibold transition-all hidden"
-                            id="btn-show-diff">So sánh (Diff)</button>
+                            id="btn-show-diff"><span data-i18n="button.show_diff">So sánh (Diff)</span></button>
                         <button
                             class="bg-white/5 border border-white/5 hover:bg-white/8 text-[9.5px] px-2 py-0.5 rounded-md cursor-pointer font-semibold transition-all"
-                            id="btn-copy-result">Copy</button>
+                            id="btn-copy-result" data-i18n="popup.copy">Copy</button>
                     </div>
                 </div>
 
@@ -383,7 +373,7 @@
                     id="result-content-panel">
                     <div class="w-full max-h-[140px] flex flex-col" id="normal-output-wrapper">
                         <div class="ai-output-loading overflow-y-auto w-full min-h-[50px] bg-[#0F1115] border border-white/5 rounded-lg p-2.5 text-[11px] leading-relaxed text-gray-200 whitespace-pre-wrap break-words"
-                            id="ai-output">Đang chuẩn bị...</div>
+                            id="ai-output" data-i18n="popup.result_preparing">Đang chuẩn bị...</div>
                     </div>
                     <div class="max-h-[140px] flex flex-col hidden" id="diff-output-wrapper">
                         <div class="w-full min-h-[50px] bg-[#0F1115] border border-white/5 rounded-lg p-2.5 text-[11px] leading-relaxed text-gray-200 overflow-y-auto whitespace-pre-wrap break-words"
@@ -399,7 +389,7 @@
                             <path fill="currentColor"
                                 d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
                         </svg>
-                        <span>Thử lại</span>
+                        <span data-i18n="button.retry">Thử lại</span>
                     </button>
                     <button
                         class="col-span-2 flex items-center justify-center gap-1.5 py-1.5 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-lg text-[10.5px] cursor-pointer transition-all active:scale-[0.98] shadow-[0_2px_6px_rgba(99,102,241,0.25)]"
@@ -407,7 +397,7 @@
                         <svg viewBox="0 0 24 24" width="13" height="13">
                             <path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                         </svg>
-                        <span>Thay thế kết quả</span>
+                        <span data-i18n="button.replace">Thay thế kết quả</span>
                     </button>
                 </div>
             </section>
@@ -421,7 +411,7 @@
                         <path fill="currentColor"
                             d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5-1.4 2.5 2.5-1.4 2.5 1.4-1.4-2.5zm0-11L17 3l1.4 2.5-1.4 2.5 2.5-1.4 2.5 1.4-1.4-2.5zm-8.8 6L3 17.25V21h3.75L17.81 9.94l-3.75-3.75zM15 9.07l1.93 1.93-1.63 1.63-1.93-1.93z" />
                     </svg>
-                    <span>Bắt đầu thực hiện</span>
+                    <span data-i18n="button.generate">Bắt đầu thực hiện</span>
                 </button>
             </div>
         </main>

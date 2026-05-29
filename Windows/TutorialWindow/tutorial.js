@@ -4,6 +4,37 @@ function postMessage(payload) {
     }
 }
 
+let i18n = {};
+
+function applyTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (!key) return;
+        const val = i18n[key];
+        if (val) el.textContent = val;
+    });
+}
+// update document.title when translations applied
+if (typeof applyTranslations === 'function') {
+    const _oldApply = applyTranslations;
+    applyTranslations = function() {
+        _oldApply();
+        if (i18n['title.tutorial']) document.title = i18n['title.tutorial'];
+    }
+}
+
+async function loadLocale(locale) {
+    if (!locale) return;
+    try {
+        const res = await fetch(`https://rewrite.local/locales/${locale}.json`);
+        if (!res.ok) throw new Error('failed to load locale');
+        i18n = await res.json();
+        applyTranslations();
+    } catch (e) {
+        console.warn('Locale load failed', e);
+    }
+}
+
 function resolveVideoUrl() {
     const params = new URLSearchParams(window.location.search);
     const fromQuery = params.get("video") || params.get("embed") || "https://www.youtube.com/embed/bM_BwH0zYKY?si=XE0ZZ85YfHd8pqCk";
@@ -48,4 +79,11 @@ window.addEventListener("DOMContentLoaded", () => {
     setupVideo();
     setupActions();
     postMessage({ action: "ui_ready" });
+    if (window.chrome && window.chrome.webview) {
+        try { window.chrome.webview.postMessage({ action: "request_locale" }); } catch { }
+        window.chrome.webview.addEventListener("message", event => {
+            const data = event.data;
+            if (data.event === 'set_locale') loadLocale(data.locale);
+        });
+    }
 });

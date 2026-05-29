@@ -5,8 +5,11 @@ let settings = {
     openaiKey: "",
     openaiModel: "gpt-4o-mini",
     activeProvider: "gemini",
-    autostart: true
+    autostart: true,
+    locale: "en"
 };
+
+let i18n = {};
 
 const hotkeyInput = document.getElementById("hotkey-input");
 const hotkeyError = document.getElementById("hotkey-error");
@@ -16,6 +19,11 @@ document.addEventListener("DOMContentLoaded", () => {
     
     if (window.chrome && window.chrome.webview) {
         window.chrome.webview.postMessage({ action: "ui_ready" });
+    }
+
+    // Request locale from host
+    if (window.chrome && window.chrome.webview) {
+        try { window.chrome.webview.postMessage({ action: "request_locale" }); } catch { }
     }
 
     // Prevent zoom shortcuts
@@ -51,6 +59,8 @@ function refreshAppSettings() {
     document.getElementById("openai-key").value = settings.openaiKey || "";
     document.getElementById("openai-model").value = settings.openaiModel || "";
     document.getElementById("active-provider").value = settings.activeProvider || "gemini";
+    const localeSelect = document.getElementById('select-locale');
+    if (localeSelect) localeSelect.value = settings.locale || 'en';
 
     // Ask C# runtime states
     if (window.chrome && window.chrome.webview) {
@@ -66,6 +76,8 @@ function saveSettings() {
     settings.openaiKey = document.getElementById("openai-key").value.trim();
     settings.openaiModel = document.getElementById("openai-model").value.trim();
     settings.activeProvider = document.getElementById("active-provider").value;
+    const localeSelect = document.getElementById('select-locale');
+    if (localeSelect) settings.locale = localeSelect.value;
     
     localStorage.setItem("rewrite_settings", JSON.stringify(settings));
     
@@ -76,6 +88,10 @@ function saveSettings() {
             action: "set_startup", 
             enabled: isAutostartChecked 
         });
+        // Persist locale change via host as well so all windows update
+        if (localeSelect) {
+            try { window.chrome.webview.postMessage({ action: 'set_locale', locale: settings.locale }); } catch { }
+        }
         if (hotkeyInput) {
             if (hotkeyError) hotkeyError.textContent = "";
             window.chrome.webview.postMessage({
@@ -90,6 +106,8 @@ function saveSettings() {
 
 function showToast() {
     const toast = document.getElementById("settings-toast");
+    if (!toast) return;
+    toast.textContent = i18n['settings.saved'] || toast.textContent;
     toast.classList.remove("opacity-0");
     toast.classList.add("opacity-100");
     setTimeout(() => {
@@ -111,14 +129,29 @@ if (window.chrome && window.chrome.webview) {
         }
         else if (data.event === "hotkey_error") {
             if (hotkeyError) {
-                hotkeyError.textContent = data.message || "Phím tắt không hợp lệ.";
+                hotkeyError.textContent = data.message || (i18n['hotkey.invalid'] || "Phím tắt không hợp lệ.");
             }
+        }
+        else if (data.event === "set_locale") {
+            loadLocale(data.locale);
+            return;
         }
     });
 }
 
 // Settings Save Trigger
 document.getElementById("save-settings-btn").addEventListener("click", saveSettings);
+
+// Locale selector
+const localeSelect = document.getElementById('select-locale');
+if (localeSelect) {
+    localeSelect.addEventListener('change', () => {
+        const val = localeSelect.value;
+        if (window.chrome && window.chrome.webview) {
+            window.chrome.webview.postMessage({ action: 'set_locale', locale: val });
+        }
+    });
+}
 
 // Record Hotkey
 if (hotkeyInput) {
@@ -174,3 +207,36 @@ document.addEventListener("mousedown", event => {
         window.chrome.webview.postMessage({ action: "start_drag" });
     }
 });
+
+async function loadLocale(locale) {
+    if (!locale) return;
+    try {
+        const res = await fetch(`https://rewrite.local/locales/${locale}.json`);
+        if (!res.ok) throw new Error('failed to load locale');
+        i18n = await res.json();
+        applyTranslations();
+        const localeSelect = document.getElementById('select-locale');
+        if (localeSelect) localeSelect.value = locale;
+        document.documentElement.lang = locale;
+    } catch (e) {
+        console.warn('Locale load failed', e);
+    }
+}
+
+function applyTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (!key) return;
+        const val = i18n[key];
+        if (val) el.textContent = val;
+    });
+
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (!key) return;
+        const val = i18n[key];
+        if (val) el.placeholder = val;
+    });
+
+    if (i18n['title.settings']) document.title = i18n['title.settings'];
+}

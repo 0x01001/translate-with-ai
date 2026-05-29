@@ -6,6 +6,9 @@ let aiResult = "";
 let historyItems = [];
 let lastRequestMeta = null;
 
+// i18n dictionary populated from host-provided locale JSON
+let i18n = {};
+
 // Settings default structure (will load from localStorage)
 let settings = {
     geminiKey: "",
@@ -45,6 +48,10 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     watchPopupResize();
     requestPopupResize();
+    // Ask host to send locale if it hasn't already
+    if (window.chrome && window.chrome.webview) {
+        try { window.chrome.webview.postMessage({ action: "request_locale" }); } catch { }
+    }
 });
 
 function escapeHtml(text) {
@@ -74,21 +81,23 @@ function updateModelLabel() {
 }
 
 function formatTime(date) {
-    return date.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    const locale = i18n['_locale_code'] || 'vi-VN';
+    return date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
 }
 
 function getTabLabel(tab, targetLang) {
-    if (tab === "rewrite") return "Viết lại";
-    if (tab === "write") return "Soạn thảo";
-    if (tab === "translate") return targetLang ? `Dịch sang ${targetLang}` : "Dịch thuật";
-    return "Kết quả";
+    if (tab === "rewrite") return i18n['tab.rewrite'] || "Viết lại";
+    if (tab === "write") return i18n['tab.write'] || "Soạn thảo";
+    if (tab === "translate") return targetLang ? (i18n['tab.translate_to'] ? `${i18n['tab.translate_to']} ${targetLang}` : `Dịch sang ${targetLang}`) : (i18n['tab.translate'] || "Dịch thuật");
+    return i18n['tab.result'] || "Kết quả";
 }
 
 function updateResultMeta(isLoading = false) {
     if (!resultMeta) return;
     const label = lastRequestMeta ? getTabLabel(lastRequestMeta.tab, lastRequestMeta.targetLang) : "Kết quả";
     if (isLoading) {
-        resultMeta.textContent = `${label} • Đang tạo...`;
+        const gen = i18n['meta.generating'] || 'Đang tạo...';
+        resultMeta.textContent = `${label} • ${gen}`;
         return;
     }
     resultMeta.textContent = `${label} • ${formatTime(new Date())}`;
@@ -153,7 +162,7 @@ function renderHistory() {
             </div>
             <div class="text-gray-200 break-words leading-relaxed select-text">${safeText}</div>
             <div class="flex justify-end gap-2 border-t border-white/5 pt-1.5 mt-1">
-                <button class="bg-white/5 border border-white/5 hover:bg-white/8 text-[9px] px-2 py-0.5 rounded-md cursor-pointer font-semibold transition-all" data-action="copy" data-id="${item.id}">Copy</button>
+                <button class="bg-white/5 border border-white/5 hover:bg-white/8 text-[9px] px-2 py-0.5 rounded-md cursor-pointer font-semibold transition-all" data-action="copy" data-id="${item.id}">${i18n['popup.copy'] || 'Copy'}</button>
             </div>
         `;
         historyList.appendChild(entry);
@@ -283,12 +292,17 @@ if (window.chrome && window.chrome.webview) {
     window.chrome.webview.addEventListener("message", event => {
         const data = event.data;
 
+        if (data.event === "set_locale") {
+            loadLocale(data.locale);
+            return;
+        }
+
         if (data.event === "show") {
             selectedText = data.text ? data.text.trim() : "";
 
             // Clean up previous AI results on fresh trigger
             aiResult = "";
-            aiOutput.innerHTML = "Đang chờ yêu cầu...";
+            aiOutput.innerHTML = i18n['popup.waiting'] || "Đang chờ yêu cầu...";
             diffOutput.innerHTML = "";
             resultContainer.style.display = "none";
             btnShowDiff.classList.add("hidden");
@@ -303,9 +317,10 @@ if (window.chrome && window.chrome.webview) {
                 translateSourcePreview.classList.remove("text-gray-500");
                 switchTab("rewrite");
             } else {
-                sourcePreview.textContent = "Chưa chọn văn bản nào... Hãy bôi đen văn bản ngoài màn hình và nhấn phím tắt.";
+                const noSelection = i18n['popup.no_selection'] || "Chưa chọn văn bản nào... Hãy bôi đen văn bản ngoài màn hình và nhấn phím tắt.";
+                sourcePreview.textContent = noSelection;
                 sourcePreview.classList.add("text-gray-500");
-                translateSourcePreview.textContent = "Chưa chọn văn bản nào... Hãy bôi đen văn bản ngoài màn hình và nhấn phím tắt.";
+                translateSourcePreview.textContent = noSelection;
                 translateSourcePreview.classList.add("text-gray-500");
                 switchTab("write");
             }
@@ -386,7 +401,8 @@ async function startAIProcess() {
 
         if (activeTab === "rewrite") {
             if (!selectedText) {
-                aiOutput.innerHTML = "<span class='text-rose-400'>Lỗi: Không tìm thấy văn bản đã chọn. Vui lòng đóng cửa sổ này, bôi đen văn bản cần viết lại bên ngoài, rồi nhấn phím tắt.</span>";
+                const msg = i18n['popup.error.no_selection'] || 'Lỗi: Không tìm thấy văn bản đã chọn. Vui lòng đóng cửa sổ này, bôi đen văn bản cần viết lại bên ngoài, rồi nhấn phím tắt.';
+                aiOutput.innerHTML = `<span class='text-rose-400'>${msg}</span>`;
                 return;
             }
 
@@ -405,7 +421,8 @@ ${customPrompt ? `- Yêu cầu đặc biệt bổ sung: "${customPrompt}"` : ""}
         }
         else if (activeTab === "write") {
             if (!customPrompt) {
-                aiOutput.innerHTML = "<span class='text-rose-400'>Lỗi: Vui lòng nhập nội dung gợi ý (Prompt) hoặc chủ đề bạn muốn soạn thảo.</span>";
+                const msg = i18n['popup.error.prompt_required'] || 'Lỗi: Vui lòng nhập nội dung gợi ý (Prompt) hoặc chủ đề bạn muốn soạn thảo.';
+                aiOutput.innerHTML = `<span class='text-rose-400'>${msg}</span>`;
                 return;
             }
 
@@ -420,7 +437,8 @@ ${selectedText ? `- Văn bản gợi ý bổ trợ ngữ cảnh (Context): "${se
         }
         else if (activeTab === "translate") {
             if (!selectedText) {
-                aiOutput.innerHTML = "<span class='text-rose-400'>Lỗi: Không tìm thấy văn bản cần dịch. Vui lòng đóng cửa sổ, bôi đen văn bản cần dịch bên ngoài, rồi nhấn phím tắt.</span>";
+                const msg = i18n['popup.error.no_text_for_translate'] || 'Lỗi: Không tìm thấy văn bản cần dịch. Vui lòng đóng cửa sổ, bôi đen văn bản cần dịch bên ngoài, rồi nhấn phím tắt.';
+                aiOutput.innerHTML = `<span class='text-rose-400'>${msg}</span>`;
                 return;
             }
 
@@ -450,7 +468,9 @@ Hãy CHỈ trả về nội dung bản dịch trực tiếp. Giữ nguyên đị
         addHistoryItem();
 
     } catch (error) {
-        aiOutput.innerHTML = `<span class='text-rose-400'>Lỗi kết nối API: ${error.message}<br>Vui lòng mở Cài đặt (từ khay hệ thống) để cấu hình API Key chính xác.</span>`;
+        const tpl = i18n['popup.error.api_connection'] || 'Lỗi kết nối API: {0}<br>Vui lòng mở Cài đặt (từ khay hệ thống) để cấu hình API Key chính xác.';
+        const msg = tpl.replace('{0}', error.message || '');
+        aiOutput.innerHTML = `<span class='text-rose-400'>${msg}</span>`;
     } finally {
         // Allow overflow and remove loading
         aiOutput.classList.remove("overflow-hidden");
@@ -461,10 +481,56 @@ Hãy CHỈ trả về nội dung bản dịch trực tiếp. Giữ nguyên đị
     }
 }
 
+async function loadLocale(locale) {
+    if (!locale) return;
+    try {
+        const res = await fetch(`https://rewrite.local/locales/${locale}.json`);
+        if (!res.ok) throw new Error('failed to load locale');
+        i18n = await res.json();
+        i18n['_locale_code'] = locale === 'vi' ? 'vi-VN' : (locale === 'en' ? 'en-US' : locale);
+        applyTranslations();
+    } catch (e) {
+        console.warn('Locale load failed', e);
+    }
+}
+
+function applyTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (!key) return;
+        const val = i18n[key];
+        if (val) el.textContent = val;
+    });
+
+    // set placeholders for inputs that request it
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (!key) return;
+        const val = i18n[key];
+        if (val) el.placeholder = val;
+    });
+
+    if (!selectedText) {
+        const src = document.getElementById('source-preview');
+        if (src) src.textContent = i18n['popup.no_selection'] || src.textContent;
+    }
+    if (aiOutput) aiOutput.innerHTML = i18n['popup.waiting'] || aiOutput.innerHTML;
+    updateModelLabel();
+    requestPopupResize();
+}
+// update document title if provided
+if (typeof applyTranslations === 'function') {
+    const _oldApply = applyTranslations;
+    applyTranslations = function() {
+        _oldApply();
+        if (i18n['title.popup']) document.title = i18n['title.popup'];
+    }
+}
+
 // Gemini API Streaming Implementation
 async function streamGemini(prompt) {
     if (!settings.geminiKey) {
-        throw new Error("Chưa cấu hình Gemini API Key. Hãy cấu hình thông qua cửa sổ Cài đặt của ứng dụng.");
+        throw new Error(i18n['popup.error.gemini_key_missing'] || "Chưa cấu hình Gemini API Key. Hãy cấu hình thông qua cửa sổ Cài đặt của ứng dụng.");
     }
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${settings.geminiModel}:streamGenerateContent?key=${settings.geminiKey}`;
@@ -568,7 +634,7 @@ function findJsonEnd(str) {
 // OpenAI API Streaming Implementation
 async function streamOpenAI(prompt) {
     if (!settings.openaiKey) {
-        throw new Error("Chưa cấu hình OpenAI API Key. Hãy cấu hình thông qua cửa sổ Cài đặt của ứng dụng.");
+        throw new Error(i18n['popup.error.openai_key_missing'] || "Chưa cấu hình OpenAI API Key. Hãy cấu hình thông qua cửa sổ Cài đặt của ứng dụng.");
     }
 
     const url = "https://api.openai.com/v1/chat/completions";

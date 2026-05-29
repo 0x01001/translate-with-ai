@@ -1,0 +1,106 @@
+{
+  "app.name": "ReWrite",
+  "title.welcome": "ReWrite",
+  "title.popup": "ReWrite Assistant",
+  "title.settings": "ReWrite Settings",
+  "title.tutorial": "ReWrite Tutorial",
+  "loading": "Loading UI...",
+  "welcome.loading": "Starting application...",
+  "welcome.ready": "Ready. You may close this window.",
+  "button.close": "Close",
+  "button.view_tutorial": "View tutorial"
+  ,"label.model": "Powered by AI",
+  "tab.rewrite": "Rewrite",
+  "tab.write": "Write",
+  "tab.translate": "Translate",
+  "tab.translate_to": "Translate to",
+  "tab.history": "History",
+  "tab.result": "Result",
+  "popup.no_selection": "No text selected... Select text outside and press the hotkey.",
+  "popup.waiting": "Waiting for input...",
+  "meta.generating": "Generating...",
+  "settings.saved": "Settings saved!",
+  "settings.title": "ReWrite Settings",
+  "button.save_settings": "Save settings",
+  "settings.group_gemini": "Gemini Service (Recommended)",
+  "settings.group_openai": "OpenAI Service",
+  "settings.group_function": "Functional Settings",
+  "settings.hotkey_label": "Hotkey",
+  "settings.hotkey_hint": "Focus the field and press preferred key combination (e.g. Ctrl+Alt+K)",
+  "settings.provider_label": "Primary provider",
+  "settings.autostart": "Start with Windows",
+  "hotkey.invalid": "Invalid hotkey.",
+  "tutorial.title": "ReWrite Tutorial",
+  "tutorial.subtitle": "Watch a short intro video explaining main features.",
+  "tutorial.no_video": "No video attached",
+  "tutorial.hint": "You can attach a YouTube embed link via query ?video=... or localStorage.",
+  "tutorial.start": "Get started with ReWrite",
+  "button.skip": "Skip"
+  ,"tray.tooltip": "ReWrite - Active",
+  "tray.open_settings": "Settings & Configuration",
+  "tray.autostart": "Start with Windows",
+  "tray.exit": "Exit"
+  ,"popup.selected_label":"Selected text:",
+  "popup.history_empty":"No saved items to display.",
+  "popup.clear_history":"Clear all",
+  "popup.result_preparing":"Preparing...",
+  "popup.copy":"Copy",
+  "popup.error.no_selection":"Error: No selected text found. Please close this window, select text outside and press the hotkey.",
+  "popup.error.prompt_required":"Error: Please enter a prompt or topic to write.",
+  "popup.error.no_text_for_translate":"Error: No text found to translate. Please select text outside and press the hotkey.",
+  "popup.error.api_connection":"API connection error: {0}<br>Please open Settings (from tray) to configure API keys.",
+  "popup.error.gemini_key_missing":"Gemini API key is not configured. Please set it in Settings.",
+  "popup.error.openai_key_missing":"OpenAI API key is not configured. Please set it in Settings.",
+  "settings.gemini_key_label":"API Key"
+  ,"settings.gemini_key_placeholder":"Enter your Gemini API key..."
+  ,"settings.gemini_model_label":"Model Name"
+  ,"settings.gemini_model_placeholder":"e.g. gemini-1.5-flash"
+  ,"settings.openai_key_label":"API Key"
+  ,"settings.openai_key_placeholder":"Enter your OpenAI API key..."
+  ,"settings.openai_model_label":"Model Name"
+  ,"settings.openai_model_placeholder":"e.g. gpt-4o-mini"
+  ,"settings.hotkey_placeholder":"Focus the field and press the key combination (e.g. Ctrl+Alt+K)"
+  ,"button.advanced_toggle":"Advanced options"
+  ,"label.tone":"Tone"
+  ,"label.format":"Format"
+  ,"label.length":"Length"
+  ,"label.rewrite_prompt":"Additional instructions"
+  ,"placeholder.rewrite_example":"e.g. Keep original tone and formatting..."
+  ,"label.write_topic":"Topic / Prompt"
+  ,"placeholder.write_topic":"Enter topic or prompt here..."
+  ,"option.default":"Default"
+  ,"tone.professional":"Professional"
+  ,"tone.casual":"Casual"
+  ,"tone.academic":"Academic"
+  ,"tone.creative":"Creative"
+  ,"tone.humorous":"Humorous"
+  ,"tone.direct":"Direct"
+  ,"format.paragraph":"Paragraph"
+  ,"format.bullets":"Bulleted list"
+  ,"format.email":"Email"
+  ,"format.short":"Short message"
+  ,"format.essay":"Long article"
+  ,"length.short":"Short"
+  ,"length.medium":"Medium"
+  ,"length.long":"Long"
+  ,"lang.vi":"Vietnamese"
+  ,"lang.en":"English"
+  ,"lang.ja":"Japanese (日本語)"
+  ,"lang.zh-CN":"Chinese Simplified (简体中文)"
+  ,"lang.zh-TW":"Chinese Traditional (繁體中文)"
+  ,"lang.fr":"French (Français)"
+  ,"lang.de":"German (Deutsch)"
+  ,"lang.ko":"Korean (한국어)"
+  ,"popup.history_title":"Temporary history"
+  ,"popup.result_title":"AI results"
+  ,"button.show_result":"Result"
+  ,"button.show_diff":"Compare (Diff)"
+  ,"button.retry":"Retry"
+  ,"button.replace":"Replace with result"
+  ,"button.generate":"Start"
+  ,"label.translate_source":"Text to translate"
+  ,"label.translate_to":"Translate to language"
+  ,"settings.language":"Language"
+  ,"provider.gemini":"Gemini (Google)"
+  ,"provider.openai":"OpenAI"
+}

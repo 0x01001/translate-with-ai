@@ -15,6 +15,10 @@ namespace ReWrite
             InitializeComponent();
             Icon = MainWindow.LoadWindowIcon();
 
+            // Localize UI
+            UpdateLocalization();
+            Localization.LocaleChanged += OnLocaleChanged;
+
             if (LoadingOverlay != null)
                 LoadingOverlay.Visibility = Visibility.Visible;
             webView.Visibility = Visibility.Hidden;
@@ -30,6 +34,21 @@ namespace ReWrite
             InitializeWebViewAsync();
         }
 
+        private void OnLocaleChanged(string locale)
+        {
+            System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                UpdateLocalization();
+                SendLocaleToWebView(locale);
+            }));
+        }
+
+        private void UpdateLocalization()
+        {
+            try { this.Title = Localization.Get("title.tutorial"); } catch { }
+            try { LoadingText.Text = Localization.Get("loading"); } catch { }
+        }
+
         // ── WebView2 initialisation ───────────────────────────────────────────────
 
         private async void InitializeWebViewAsync()
@@ -41,12 +60,18 @@ namespace ReWrite
                 webView.DefaultBackgroundColor = System.Drawing.Color.FromArgb(15, 17, 21); // #0F1115
 
                 EmbeddedUiContent.ConfigureWebView(webView.CoreWebView2);
+                webView.WebMessageReceived += WebView_WebMessageReceived;
 
                 if (LoadingOverlay != null)
                     LoadingOverlay.Visibility = Visibility.Visible;
 
                 webView.Source = new Uri("https://rewrite.local/tutorial.html");
-                webView.WebMessageReceived += WebView_WebMessageReceived;
+                try
+                {
+                    var localePayload = new { @event = "set_locale", locale = Localization.CurrentLocale };
+                    webView.CoreWebView2.PostWebMessageAsJson(System.Text.Json.JsonSerializer.Serialize(localePayload));
+                }
+                catch { }
             }
             catch (Exception ex)
             {
@@ -61,6 +86,25 @@ namespace ReWrite
             if (LoadingOverlay != null)
                 LoadingOverlay.Visibility = Visibility.Collapsed;
             webView.Visibility = Visibility.Visible;
+        }
+
+        public void SendLocaleToWebView(string locale)
+        {
+            try
+            {
+                if (webView?.CoreWebView2 != null)
+                {
+                    var payload = new { @event = "set_locale", locale };
+                    webView.CoreWebView2.PostWebMessageAsJson(System.Text.Json.JsonSerializer.Serialize(payload));
+                }
+            }
+            catch { }
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            Localization.LocaleChanged -= OnLocaleChanged;
+            base.OnClosed(e);
         }
 
         // ── Cleanup on close ──────────────────────────────────────────────────────
@@ -98,8 +142,23 @@ namespace ReWrite
                 using var doc = System.Text.Json.JsonDocument.Parse(json);
                 string action = doc.RootElement.GetProperty("action").GetString() ?? "";
 
-                if (action == "ui_ready") { HideLoadingOverlay(); return; }
+                if (action == "ui_ready")
+                {
+                    HideLoadingOverlay();
+                    SendLocaleToWebView(Localization.CurrentLocale);
+                    return;
+                }
                 if (action == "close")    { this.Close(); }
+                if (action == "request_locale")
+                {
+                    try
+                    {
+                        var payload = new { @event = "set_locale", locale = Localization.CurrentLocale };
+                        webView.CoreWebView2.PostWebMessageAsJson(System.Text.Json.JsonSerializer.Serialize(payload));
+                    }
+                    catch { }
+                    return;
+                }
             }
             catch (Exception ex)
             {

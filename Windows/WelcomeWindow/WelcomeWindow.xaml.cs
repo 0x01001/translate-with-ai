@@ -21,9 +21,26 @@ namespace ReWrite
             Icon = MainWindow.LoadWindowIcon();
             LogoImage.Source = EmbeddedUiContent.LoadImageSource("logo.png");
 
+            // Localize visible strings
+            UpdateLocalization();
+            Localization.LocaleChanged += OnLocaleChanged;
+
             _hasSeenTutorial = TutorialStateStore.HasSeenTutorial();
 
             Loaded += WelcomeWindow_Loaded;
+        }
+
+        private void OnLocaleChanged(string locale)
+        {
+            // Ensure UI update runs on dispatcher thread
+            System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() => UpdateLocalization()));
+        }
+
+        private void UpdateLocalization()
+        {
+            try { this.Title = Localization.Get("title.welcome"); } catch { }
+            try { StatusText.Text = Localization.Get("welcome.loading"); } catch { }
+            try { CloseButton.Content = Localization.Get("button.close"); } catch { }
         }
 
         private void WelcomeWindow_Loaded(object sender, RoutedEventArgs e)
@@ -59,12 +76,12 @@ namespace ReWrite
         /// </summary>
         public void MarkReady()
         {
-            StatusText.Text = "Da san sang. Ban co the dong cua so nay.";
+            StatusText.Text = Localization.Get("welcome.ready");
 
             if (LoadingBar != null)
                 LoadingBar.Visibility = Visibility.Collapsed;
 
-            CloseButton.Content    = _hasSeenTutorial ? "Dong" : "Xem huong dan";
+            CloseButton.Content    = _hasSeenTutorial ? Localization.Get("button.close") : Localization.Get("button.view_tutorial");
             CloseButton.Visibility = Visibility.Visible;
             CloseButton.IsEnabled  = true;
         }
