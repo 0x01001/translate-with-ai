@@ -36,14 +36,6 @@ jobs:
       - name: Publish
         run: dotnet publish -c Release -r win-x64 -o release
 
-      - name: Compile .ISS to .EXE Installer
-        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
-        with:
-          path: ReWrite.iss
-          # Pass AppVersion to preprocessor and force output dir/filename to a known value
-          options: "/DAppVersion=${{ steps.version.outputs.VERSION }} /Oinstaller /FReWrite-Setup-v${{ steps.version.outputs.VERSION }}"
-
-      # 👉 lấy version từ EXE
       - name: Get version
         id: version
         run: |
@@ -51,15 +43,17 @@ jobs:
           $version = (Get-Item $exe).VersionInfo.FileVersion
           echo "VERSION=$version" >> $env:GITHUB_OUTPUT
 
-      # 👉 rename EXE theo version
+      - name: Compile .ISS to .EXE Installer
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+        with:
+          path: ReWrite.iss
+          options: "/DAppVersion=${{ steps.version.outputs.VERSION }} /Oinstaller /FReWrite-Setup-v${{ steps.version.outputs.VERSION }}"
+
       - name: Rename EXE
         run: |
           $version = "${{ steps.version.outputs.VERSION }}"
           Rename-Item "release/ReWrite.exe" "release/ReWrite-Portable-v$version.exe"
 
-      # The Inno Setup Action compiles the .iss and writes the installer into the repo workspace.
-
-      # 👉 create release + upload file
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
