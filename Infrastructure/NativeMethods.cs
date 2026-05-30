@@ -46,6 +46,14 @@ namespace ReWrite
         [DllImport("user32.dll")]
         public static extern IntPtr SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
 
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        public static extern uint RegisterWindowMessage(string lpString);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        public static readonly IntPtr HWND_BROADCAST = new IntPtr(0xffff);
+
         // ── dwmapi.dll ────────────────────────────────────────────────────────────
 
         [DllImport("dwmapi.dll")]

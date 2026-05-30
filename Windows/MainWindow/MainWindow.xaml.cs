@@ -14,6 +14,7 @@ namespace ReWrite
     public partial class MainWindow : Window
     {
         private const int HOTKEY_ID = 9000;
+        private static int _singleInstanceMsg;
 
         private HwndSource? _hwndSource;
         private System.Windows.Forms.NotifyIcon? _trayIcon;
@@ -68,6 +69,14 @@ namespace ReWrite
             _hwndSource = HwndSource.FromHwnd(_mainHwnd);
             _hwndSource?.AddHook(HwndHook);
 
+            try
+            {
+                uint msg = NativeMethods.RegisterWindowMessage("ReWrite_SingleInstance_ShowAlreadyRunning");
+                if (msg != 0)
+                    _singleInstanceMsg = (int)msg;
+            }
+            catch { }
+
             LoadHotkeyConfig();
 
             if (!RegisterCurrentHotkey())
@@ -87,6 +96,26 @@ namespace ReWrite
             {
                 OnHotKeyPressed();
                 handled = true;
+                return IntPtr.Zero;
+            }
+
+            if (_singleInstanceMsg != 0 && msg == _singleInstanceMsg)
+            {
+                try
+                {
+                    if (_trayIcon != null)
+                    {
+                        _trayIcon.ShowBalloonTip(
+                            3000,
+                            "Warning",
+                            "A previous instance of ReWrite is already running. Look for ReWrite icon at the bottom right of the screen.",
+                            System.Windows.Forms.ToolTipIcon.Warning);
+                    }
+                }
+                catch { }
+
+                handled = true;
+                return IntPtr.Zero;
             }
             return IntPtr.Zero;
         }
