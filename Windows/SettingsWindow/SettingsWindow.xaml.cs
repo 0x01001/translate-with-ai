@@ -51,6 +51,7 @@ namespace ReWrite
         {
             try { this.Title = Localization.Get("title.settings"); } catch { }
             try { LoadingText.Text = Localization.Get("loading"); } catch { }
+            try { LoadingSubText.Text = Localization.Get("loading.sub"); } catch { }
         }
 
         // ── WebView2 initialisation ───────────────────────────────────────────────

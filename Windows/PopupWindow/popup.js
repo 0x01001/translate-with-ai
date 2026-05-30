@@ -738,13 +738,21 @@ function getLengthText(length) {
 }
 
 function toggleButtonsDisabled(disabled) {
-    document.getElementById("btn-generate").disabled = disabled;
-    document.getElementById("btn-retry").disabled = disabled;
-    document.getElementById("btn-replace").disabled = disabled;
-    tabs.forEach(btn => {
-        const tabId = btn.getAttribute("data-tab");
-        if (tabId) btn.disabled = disabled;
+    // Disable all native buttons and apply a dimming class for visual feedback
+    document.querySelectorAll('button').forEach(btn => {
+        try { btn.disabled = disabled; } catch (e) { }
+        if (disabled) btn.classList.add('disabled-dim'); else btn.classList.remove('disabled-dim');
     });
+
+    // Also ensure tab buttons in `tabs` follow the same state (redundant but explicit)
+    tabs.forEach(btn => {
+        try { btn.disabled = disabled; } catch (e) { }
+    });
+
+    // Remove focus while generating to avoid accidental keyboard interactions
+    if (disabled && document.activeElement) {
+        try { document.activeElement.blur(); } catch (e) { }
+    }
 }
 
 function switchResultTab(tabName) {

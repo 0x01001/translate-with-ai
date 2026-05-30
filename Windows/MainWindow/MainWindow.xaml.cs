@@ -14,13 +14,13 @@ namespace ReWrite
     public partial class MainWindow : Window
     {
         private const int HOTKEY_ID = 9000;
+        private const uint TRAY_MENU_OPEN_SETTINGS = 1001;
+        private const uint TRAY_MENU_AUTOSTART = 1002;
+        private const uint TRAY_MENU_EXIT = 1003;
         private static int _singleInstanceMsg;
 
         private HwndSource? _hwndSource;
         private System.Windows.Forms.NotifyIcon? _trayIcon;
-        private System.Windows.Forms.ToolStripMenuItem? _openSettingsItem;
-        private System.Windows.Forms.ToolStripMenuItem? _autostartItem;
-        private System.Windows.Forms.ToolStripMenuItem? _exitItem;
         private PopupWindow? _popupWindow;
         private SettingsWindow? _settingsWindow;
         private IntPtr _mainHwnd = IntPtr.Zero;
@@ -33,6 +33,13 @@ namespace ReWrite
         {
             InitializeComponent();
             Icon = LoadWindowIcon();
+
+            try
+            {
+                NativeMethods.SetPreferredAppMode(NativeMethods.PreferredAppMode.ForceDark);
+                NativeMethods.FlushMenuThemes();
+            }
+            catch { }
 
             // Window acts as a hidden controller — size/position are set off-screen in XAML
             this.Width = 0;
@@ -266,41 +273,74 @@ namespace ReWrite
                 Visible = true
             };
 
-            var contextMenu = new System.Windows.Forms.ContextMenuStrip();
-
-            _openSettingsItem = new System.Windows.Forms.ToolStripMenuItem(Localization.Get("tray.open_settings"));
-            _openSettingsItem.Click += (s, e) => OpenSettings();
-            contextMenu.Items.Add(_openSettingsItem);
-
-            contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-
-            _autostartItem = new System.Windows.Forms.ToolStripMenuItem(Localization.Get("tray.autostart"))
-            {
-                Checked = StartupManager.IsAutostartEnabled()
-            };
-            _autostartItem.Click += (s, e) =>
-            {
-                if (StartupManager.IsAutostartEnabled())
-                {
-                    StartupManager.DisableAutostart();
-                    if (_autostartItem != null) _autostartItem.Checked = false;
-                }
-                else
-                {
-                    StartupManager.EnableAutostart();
-                    if (_autostartItem != null) _autostartItem.Checked = true;
-                }
-            };
-            contextMenu.Items.Add(_autostartItem);
-
-            contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-
-            _exitItem = new System.Windows.Forms.ToolStripMenuItem(Localization.Get("tray.exit"));
-            _exitItem.Click += (s, e) => ExitApp();
-            contextMenu.Items.Add(_exitItem);
-
-            _trayIcon.ContextMenuStrip = contextMenu;
+            _trayIcon.MouseUp += TrayIcon_MouseUp;
             _trayIcon.DoubleClick += (s, e) => OpenSettings();
+        }
+
+        private void TrayIcon_MouseUp(object? sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            if (e.Button == System.Windows.Forms.MouseButtons.Right)
+                ShowTrayMenu();
+        }
+
+        private void ShowTrayMenu()
+        {
+            if (_mainHwnd == IntPtr.Zero)
+                return;
+
+            IntPtr menu = NativeMethods.CreatePopupMenu();
+            if (menu == IntPtr.Zero)
+                return;
+
+            try
+            {   
+                NativeMethods.AppendMenu(menu, NativeMethods.MF_STRING, TRAY_MENU_OPEN_SETTINGS, Localization.Get("tray.open_settings"));
+                uint autostartFlags = NativeMethods.MF_STRING;
+                if (StartupManager.IsAutostartEnabled())
+                    autostartFlags |= NativeMethods.MF_CHECKED;
+                NativeMethods.AppendMenu(menu, autostartFlags, TRAY_MENU_AUTOSTART, Localization.Get("tray.autostart"));
+
+                NativeMethods.AppendMenu(menu, NativeMethods.MF_SEPARATOR, 0, IntPtr.Zero);
+                NativeMethods.AppendMenu(menu, NativeMethods.MF_STRING, TRAY_MENU_EXIT, Localization.Get("tray.exit"));
+
+                try
+                {
+                    NativeMethods.FlushMenuThemes();
+                }
+                catch { }
+
+                NativeMethods.GetCursorPos(out NativeMethods.POINT cursorPos);
+                NativeMethods.SetForegroundWindow(_mainHwnd);
+
+                uint commandId = NativeMethods.TrackPopupMenuEx(
+                    menu,
+                    NativeMethods.TPM_RIGHTBUTTON | NativeMethods.TPM_RETURNCMD,
+                    cursorPos.X,
+                    cursorPos.Y,
+                    _mainHwnd,
+                    IntPtr.Zero);
+
+                if (commandId == TRAY_MENU_OPEN_SETTINGS)
+                {
+                    OpenSettings();
+                }
+                else if (commandId == TRAY_MENU_AUTOSTART)
+                {
+                    if (StartupManager.IsAutostartEnabled())
+                        StartupManager.DisableAutostart();
+                    else
+                        StartupManager.EnableAutostart();
+                }
+                else if (commandId == TRAY_MENU_EXIT)
+                {
+                    ExitApp();
+                }
+            }
+            finally
+            {
+                NativeMethods.PostMessage(_mainHwnd, (uint)NativeMethods.WM_NULL, IntPtr.Zero, IntPtr.Zero);
+                NativeMethods.DestroyMenu(menu);
+            }
         }
 
         private void OnLocaleChanged(string locale)
@@ -316,10 +356,6 @@ namespace ReWrite
                     _trayIcon.Text = Localization.Get("tray.tooltip");
             }
             catch { }
-
-            try { if (_openSettingsItem != null) _openSettingsItem.Text = Localization.Get("tray.open_settings"); } catch { }
-            try { if (_autostartItem != null) _autostartItem.Text = Localization.Get("tray.autostart"); } catch { }
-            try { if (_exitItem != null) _exitItem.Text = Localization.Get("tray.exit"); } catch { }
         }
 
         private static System.Drawing.Icon CreateTrayIcon()

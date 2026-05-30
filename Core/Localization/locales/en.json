@@ -5,6 +5,7 @@
   "title.settings": "ReWrite Settings",
   "title.tutorial": "ReWrite Tutorial",
   "loading": "Loading UI...",
+  "loading.sub": "Have a nice day 😊",
   "welcome.loading": "Starting application...",
   "welcome.ready": "Ready. You may close this window.",
   "button.close": "Close",
@@ -37,7 +38,7 @@
   "tutorial.start": "Get started with ReWrite",
   "button.skip": "Skip"
   ,"tray.tooltip": "ReWrite - Active",
-  "tray.open_settings": "Settings & Configuration",
+  "tray.open_settings": "Configuration",
   "tray.autostart": "Start with Windows",
   "tray.exit": "Exit"
   ,"popup.selected_label":"Selected text:",

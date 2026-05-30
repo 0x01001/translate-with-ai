@@ -83,6 +83,16 @@
                 box-shadow: 0 0 22px rgba(99, 102, 241, 0.28), 0 0 38px rgba(6, 182, 212, 0.15);
             }
         }
+
+        /* Dim disabled buttons for clearer UX when generation is in progress */
+        button:disabled,
+        .disabled-dim {
+            opacity: 0.48;
+            filter: grayscale(10%);
+            cursor: not-allowed;
+            transition: opacity 180ms ease, filter 180ms ease;
+            pointer-events: none;
+        }
     </style>
 </head>
 

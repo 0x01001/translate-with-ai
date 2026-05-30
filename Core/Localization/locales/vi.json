@@ -5,6 +5,7 @@
   "title.settings": "Cài đặt ReWrite",
   "title.tutorial": "Hướng dẫn ReWrite",
   "loading": "Đang tải giao diện...",
+  "loading.sub": "Chúc bạn một ngày tốt lành 😊",
   "welcome.loading": "Đang khởi động ứng dụng...",
   "welcome.ready": "Đã sẵn sàng. Bạn có thể đóng cửa sổ này.",
   "button.close": "Đóng",
@@ -37,7 +38,7 @@
   "tutorial.start": "Bắt đầu dùng ReWrite",
   "button.skip": "Để sau"
   ,"tray.tooltip": "ReWrite - Đang hoạt động",
-  "tray.open_settings": "Cài đặt & cấu hình",
+  "tray.open_settings": "Cấu hình",
   "tray.autostart": "Khởi động cùng Windows",
   "tray.exit": "Thoát"
   ,"popup.selected_label":"Văn bản đã chọn:",

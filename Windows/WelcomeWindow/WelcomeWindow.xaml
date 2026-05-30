@@ -24,53 +24,171 @@
     </WindowChrome.WindowChrome>
 
     <!-- Giữ nguyên cấu trúc giao diện gốc của bạn -->
-    <Grid Background="#0F1115">
+    <Grid Background="#0F1115"
+      ClipToBounds="True">
 
-        <Grid>
+    <!-- Ambient -->
 
-            <StackPanel VerticalAlignment="Center"
-                        HorizontalAlignment="Center">
+    <Ellipse Width="220"
+             Height="220"
+             Fill="#4C1D95"
+             Opacity="0.12"
+             HorizontalAlignment="Left"
+             VerticalAlignment="Top"
+             Margin="-90,-90,0,0">
 
-                <Image x:Name="LogoImage"
-                    Width="72"
-                    Height="72"
-                    Margin="0,0,0,12" />
+        <Ellipse.Effect>
+            <BlurEffect Radius="90"/>
+        </Ellipse.Effect>
 
-                <TextBlock Text="ReWrite"
-                        FontSize="22"
-                        FontWeight="SemiBold"
-                        Foreground="#F3F4F6"
-                        HorizontalAlignment="Center" />
+    </Ellipse>
 
-                <TextBlock x:Name="StatusText"
-                        Text="Dang khoi dong ung dung..."
-                        FontSize="12"
-                        Foreground="#9CA3AF"
-                        Margin="0,6,0,0"
-                        HorizontalAlignment="Center" />
+    <Ellipse Width="220"
+             Height="220"
+             Fill="#312E81"
+             Opacity="0.10"
+             HorizontalAlignment="Right"
+             VerticalAlignment="Bottom"
+             Margin="0,0,-90,-90">
 
-                <ProgressBar x:Name="LoadingBar"
-                            Height="6"
-                            Width="160"
-                            Margin="0,12,0,0"
-                            IsIndeterminate="True"
-                            Foreground="#EC4899"
-                            Background="#1B1F27" />
+        <Ellipse.Effect>
+            <BlurEffect Radius="90"/>
+        </Ellipse.Effect>
 
-                <Button x:Name="CloseButton"
-                        Content="Dong"
-                        Width="120"
-                        Height="30"
-                        Margin="0,12,0,0"
-                        Background="#EC4899"
-                        Foreground="#FFFFFF"
-                        BorderThickness="0"
-                        Click="CloseButton_Click"
-                        Visibility="Collapsed" />
+    </Ellipse>
 
-            </StackPanel>
+    <StackPanel HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+
+        <Grid Width="72"
+              Height="72">
+
+            <Ellipse Width="28"
+                     Height="28"
+                     HorizontalAlignment="Center"
+                     VerticalAlignment="Center"
+                     Opacity="0.45">
+
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#C084FC"
+                                      Offset="0"/>
+                        <GradientStop Color="#4F46E5"
+                                      Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+
+                <Ellipse.Effect>
+                    <BlurEffect Radius="12"/>
+                </Ellipse.Effect>
+
+            </Ellipse>
+
+            <Image x:Name="LogoImage"
+                   Width="72"
+                   Height="72"/>
 
         </Grid>
 
-    </Grid>
+        <TextBlock Text="ReWrite"
+                   Margin="0,12,0,0"
+                   FontSize="22"
+                   FontWeight="SemiBold"
+                   Foreground="#F5F3FF"
+                   HorizontalAlignment="Center"/>
+
+        <TextBlock x:Name="StatusText"
+                   Margin="0,8,0,0"
+                   Text="Dang khoi dong ung dung..."
+                   FontSize="12"
+                   Foreground="#A5B4FC"
+                   HorizontalAlignment="Center"/>
+
+        <!-- Accent loading line -->
+
+        <Grid x:Name="LoadingBar"
+              Width="140"
+              Height="16"
+              Margin="0,14,0,0"
+              ClipToBounds="True">
+
+            <Rectangle Height="2"
+                       Fill="#243244"
+                       VerticalAlignment="Center"/>
+
+            <Rectangle Width="46"
+                       Height="2"
+                       VerticalAlignment="Center">
+
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="0,0"
+                                         EndPoint="1,0">
+                        <GradientStop Color="#00000000"
+                                      Offset="0"/>
+                        <GradientStop Color="#A855F7"
+                                      Offset="0.5"/>
+                        <GradientStop Color="#4F46E5"
+                                      Offset="1"/>
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+
+                <Rectangle.RenderTransform>
+                    <TranslateTransform/>
+                </Rectangle.RenderTransform>
+
+                <Rectangle.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard RepeatBehavior="Forever">
+                                <DoubleAnimation
+                                    Storyboard.TargetProperty="RenderTransform.X"
+                                    From="-60"
+                                    To="180"
+                                    Duration="0:0:1.6"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Rectangle.Triggers>
+
+            </Rectangle>
+
+        </Grid>
+
+        <Button x:Name="CloseButton"
+                Width="120"
+                Height="32"
+                Margin="0,18,0,0"
+                Visibility="Collapsed"
+                Click="CloseButton_Click"
+                BorderThickness="0"
+                Foreground="White">
+
+            <Button.Background>
+                <LinearGradientBrush StartPoint="0,0"
+                                     EndPoint="1,0">
+                    <GradientStop Color="#9333EA"
+                                  Offset="0"/>
+                    <GradientStop Color="#4F46E5"
+                                  Offset="1"/>
+                </LinearGradientBrush>
+            </Button.Background>
+
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="8">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Button.Template>
+
+            <TextBlock Text="Dong"
+                       FontWeight="SemiBold"/>
+
+        </Button>
+
+    </StackPanel>
+
+</Grid>
 </Window>

@@ -5,21 +5,247 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         mc:Ignorable="d"
-        Title="ReWrite Settings" Height="620" Width="760"
-        WindowStyle="SingleBorderWindow" ResizeMode="CanResize"
-        Background="#0F1115" ShowInTaskbar="True" WindowStartupLocation="CenterScreen">
+        Title="ReWrite Settings"
+        Height="620"
+        Width="760"
+        WindowStyle="SingleBorderWindow"
+        ResizeMode="CanResize"
+        Background="#0F1115"
+        ShowInTaskbar="True"
+        WindowStartupLocation="CenterScreen">
 
     <Grid>
-        <wv2:WebView2 Name="webView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
 
-        <Border x:Name="LoadingOverlay" Background="#0F1115">
-            <Grid>
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock x:Name="LoadingText" Text="Dang tai giao dien..." FontSize="12" Foreground="#9CA3AF" HorizontalAlignment="Center" />
-                    <ProgressBar Height="6" Width="200" Margin="0,10,0,0" IsIndeterminate="True"
-                                 Foreground="#EC4899" Background="#1B1F27" />
-                </StackPanel>
-            </Grid>
-        </Border>
+        <wv2:WebView2 Name="webView"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch"/>
+
+        <Grid x:Name="LoadingOverlay"
+              Background="#0F1115"
+              ClipToBounds="True">
+
+            <!-- Background glow -->
+
+            <Ellipse Width="500"
+                     Height="500"
+                     Fill="#4C1D95"
+                     Opacity="0.18"
+                     HorizontalAlignment="Left"
+                     VerticalAlignment="Top"
+                     Margin="-180,-200,0,0">
+
+                <Ellipse.Effect>
+                    <BlurEffect Radius="140"/>
+                </Ellipse.Effect>
+
+            </Ellipse>
+
+            <Ellipse Width="420"
+                     Height="420"
+                     Fill="#312E81"
+                     Opacity="0.15"
+                     HorizontalAlignment="Right"
+                     VerticalAlignment="Bottom"
+                     Margin="0,0,-120,-120">
+
+                <Ellipse.Effect>
+                    <BlurEffect Radius="120"/>
+                </Ellipse.Effect>
+
+            </Ellipse>
+
+            <!-- Main Content -->
+
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+
+                <!-- Loader -->
+
+                <Grid Width="88"
+                      Height="88">
+
+                    <!-- Outer Ring -->
+
+                    <Ellipse Width="88"
+                             Height="88"
+                             Stroke="#243244"
+                             StrokeThickness="1.2"/>
+
+                    <!-- Rotating Arc -->
+
+                    <Path StrokeThickness="3"
+                          StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round"
+                          Data="M44,5 A39,39 0 0 1 70,14"
+                          RenderTransformOrigin="0.5,0.5">
+
+                        <Path.Stroke>
+                            <LinearGradientBrush StartPoint="0,0"
+                                                 EndPoint="1,1">
+                                <GradientStop Color="#9333EA" Offset="0"/>
+                                <GradientStop Color="#4F46E5" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Path.Stroke>
+
+                        <Path.RenderTransform>
+                            <RotateTransform Angle="0"/>
+                        </Path.RenderTransform>
+
+                        <Path.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever">
+                                        <DoubleAnimation
+                                            Storyboard.TargetProperty="RenderTransform.Angle"
+                                            From="0"
+                                            To="360"
+                                            Duration="0:0:4"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Path.Triggers>
+
+                    </Path>
+
+                    <!-- Glow -->
+
+                    <Ellipse Width="32"
+                             Height="32"
+                             Opacity="0.45"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center">
+
+                        <Ellipse.Fill>
+                            <RadialGradientBrush>
+                                <GradientStop Color="#C084FC" Offset="0"/>
+                                <GradientStop Color="#4F46E5" Offset="1"/>
+                            </RadialGradientBrush>
+                        </Ellipse.Fill>
+
+                        <Ellipse.Effect>
+                            <BlurEffect Radius="12"/>
+                        </Ellipse.Effect>
+
+                    </Ellipse>
+
+                    <!-- Core -->
+
+                    <Ellipse Width="12"
+                             Height="12"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center">
+
+                        <Ellipse.Fill>
+                            <LinearGradientBrush StartPoint="0,0"
+                                                 EndPoint="1,1">
+                                <GradientStop Color="#C084FC" Offset="0"/>
+                                <GradientStop Color="#6366F1" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Ellipse.Fill>
+
+                        <Ellipse.RenderTransform>
+                            <ScaleTransform/>
+                        </Ellipse.RenderTransform>
+
+                        <Ellipse.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever">
+
+                                        <DoubleAnimation
+                                            Storyboard.TargetProperty="RenderTransform.ScaleX"
+                                            From="1"
+                                            To="1.2"
+                                            Duration="0:0:1.5"
+                                            AutoReverse="True"/>
+
+                                        <DoubleAnimation
+                                            Storyboard.TargetProperty="RenderTransform.ScaleY"
+                                            From="1"
+                                            To="1.2"
+                                            Duration="0:0:1.5"
+                                            AutoReverse="True"/>
+
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Ellipse.Triggers>
+
+                    </Ellipse>
+
+                </Grid>
+
+                <!-- Title -->
+
+                <TextBlock x:Name="LoadingText"
+                           Margin="0,26,0,0"
+                           Text="Dang tai giao dien..."
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           Foreground="#F5F3FF"
+                           HorizontalAlignment="Center"/>
+
+                <!-- Subtitle -->
+
+                <TextBlock x:Name="LoadingSubText"
+                           Margin="0,8,0,0"
+                           Text="Preparing workspace"
+                           FontSize="12"
+                           Foreground="#A5B4FC"
+                           HorizontalAlignment="Center"/>
+
+                <!-- Progress Accent -->
+
+                <Grid Width="260"
+                      Height="24"
+                      Margin="0,22,0,0"
+                      ClipToBounds="True">
+
+                    <Rectangle Height="2"
+                               Fill="#243244"
+                               VerticalAlignment="Center"/>
+
+                    <Rectangle Width="90"
+                               Height="2"
+                               VerticalAlignment="Center">
+
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0"
+                                                 EndPoint="1,0">
+                                <GradientStop Color="#00000000" Offset="0"/>
+                                <GradientStop Color="#A855F7" Offset="0.5"/>
+                                <GradientStop Color="#4F46E5" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+
+                        <Rectangle.RenderTransform>
+                            <TranslateTransform/>
+                        </Rectangle.RenderTransform>
+
+                        <Rectangle.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever">
+
+                                        <DoubleAnimation
+                                            Storyboard.TargetProperty="RenderTransform.X"
+                                            From="-120"
+                                            To="320"
+                                            Duration="0:0:2.2"/>
+
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Rectangle.Triggers>
+
+                    </Rectangle>
+
+                </Grid>
+
+            </StackPanel>
+
+        </Grid>
+
     </Grid>
+
 </Window>
