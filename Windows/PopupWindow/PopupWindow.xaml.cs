@@ -17,8 +17,11 @@ namespace ReWrite
         private readonly MainWindow _parent;
         private IntPtr _targetHwnd = IntPtr.Zero;
         private bool _uiReady = false;       // Front-end has sent ui_ready
+        private bool _hasPendingShow = false;
         private string _pendingText = "";
         private bool _pendingSettings = false;
+        private string _lastShowText = "";
+        private bool _lastShowSettings = false;
 
         public PopupWindow(MainWindow parent)
         {
@@ -109,17 +112,18 @@ namespace ReWrite
         public void PrepareShow(string selectedText, IntPtr targetHwnd, bool openSettingsDirectly = false)
         {
             _targetHwnd = targetHwnd;
+            _pendingText = selectedText;
+            _pendingSettings = openSettingsDirectly;
+            _hasPendingShow = true;
 
             if (_uiReady)
             {
                 // UI is fully ready — send immediately
                 PushShowMessage(selectedText, openSettingsDirectly);
-            }
-            else
-            {
-                // Store and send once ui_ready arrives
-                _pendingText     = selectedText;
-                _pendingSettings = openSettingsDirectly;
+                _hasPendingShow = false;
+                _pendingText = "";
+                _pendingSettings = false;
+                _ = ResendLastShowMessageAsync();
             }
         }
 
@@ -146,12 +150,15 @@ namespace ReWrite
                     SendLocaleToWebView(Localization.CurrentLocale);
 
                     // Flush any text / settings queued before the UI was ready
-                    if (!string.IsNullOrEmpty(_pendingText) || _pendingSettings)
+                    if (_hasPendingShow)
                     {
                         PushShowMessage(_pendingText, _pendingSettings);
+                        _hasPendingShow = false;
                         _pendingText     = "";
                         _pendingSettings = false;
                     }
+
+                    _ = ResendLastShowMessageAsync();
                     return;
                 }
 
@@ -201,6 +208,9 @@ namespace ReWrite
         {
             try
             {
+                _lastShowText = selectedText;
+                _lastShowSettings = openSettingsDirectly;
+
                 var payload = new
                 {
                     @event = "show",
@@ -214,6 +224,19 @@ namespace ReWrite
             {
                 System.Diagnostics.Debug.WriteLine($"Error pushing show message: {ex.Message}");
             }
+        }
+
+        private async Task ResendLastShowMessageAsync()
+        {
+            await Task.Delay(120);
+
+            if (!_uiReady || !IsVisible || !webView.IsVisible)
+                return;
+
+            if (_lastShowText == "" && !_lastShowSettings)
+                return;
+
+            PushShowMessage(_lastShowText, _lastShowSettings);
         }
 
         // ── Paste & hide ──────────────────────────────────────────────────────────
