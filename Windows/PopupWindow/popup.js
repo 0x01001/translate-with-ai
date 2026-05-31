@@ -41,6 +41,7 @@ const btnClearHistory = document.getElementById("btn-clear-history");
 
 let resizeAnimationFrame = null;
 let popupResizeObserver = null;
+const promptTemplates = window.ReWritePromptTemplates || {};
 
 window.addEventListener("DOMContentLoaded", () => {
     if (window.chrome && window.chrome.webview) {
@@ -220,6 +221,17 @@ function refreshAppSettings() {
         }
     }
     updateModelLabel();
+}
+
+function renderPrompt(template, values) {
+    return template.replace(/\{\{(\w+)}}/g, (_, key) => values[key] ?? "");
+}
+
+function normalizePromptSpacing(prompt) {
+    return prompt
+        .replace(/[ \t]+\n/g, "\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
 }
 
 // Tab Switching
@@ -406,18 +418,13 @@ async function startAIProcess() {
                 return;
             }
 
-            prompt = `Bạn là một trợ lý viết lách chuyên nghiệp. Hãy viết lại (rewrite) đoạn văn sau đây:
-- Tone giọng yêu cầu: ${getToneText(tone)}
-- Định dạng yêu cầu: ${getFormatText(format)}
-- Độ dài yêu cầu: ${getLengthText(length)}
-${customPrompt ? `- Yêu cầu đặc biệt bổ sung: "${customPrompt}"` : ""}
-
-Đoạn văn gốc cần viết lại:
-            """
-            ${selectedText}
-            """
-
-        Hãy CHỈ trả về nội dung đã được viết lại trực tiếp. Giữ nguyên ngôn ngữ gốc và định dạng (xuống dòng, gạch đầu dòng, tiêu đề). Tuyệt đối không thêm lời giới thiệu, lời kết, không giải thích lý do thay đổi và không bọc trong markdown codeblock.`;
+            prompt = normalizePromptSpacing(renderPrompt(promptTemplates.rewrite, {
+                tone: getToneText(tone),
+                format: getFormatText(format),
+                length: getLengthText(length),
+                customPromptLine: customPrompt ? `- Yêu cầu đặc biệt bổ sung: "${customPrompt}"` : "",
+                selectedText
+            }));
         }
         else if (activeTab === "write") {
             if (!customPrompt) {
@@ -426,14 +433,13 @@ ${customPrompt ? `- Yêu cầu đặc biệt bổ sung: "${customPrompt}"` : ""}
                 return;
             }
 
-            prompt = `Bạn là một trợ lý viết lách chuyên nghiệp. Hãy soạn thảo một bài viết/văn bản mới theo yêu cầu sau:
-            - Chủ đề/Yêu cầu soạn thảo: "${customPrompt}"
-- Tone giọng yêu cầu: ${getToneText(tone)}
-- Định dạng yêu cầu: ${getFormatText(format)}
-- Độ dài yêu cầu: ${getLengthText(length)}
-${selectedText ? `- Văn bản gợi ý bổ trợ ngữ cảnh (Context): "${selectedText}"` : ""}
-
-            Hãy CHỈ trả về nội dung đã soạn thảo hoàn chỉnh trực tiếp. Tuyệt đối không thêm lời giới thiệu, lời kết, không giải thích lý do và không bọc trong markdown codeblock.`;
+            prompt = normalizePromptSpacing(renderPrompt(promptTemplates.write, {
+                customPrompt,
+                tone: getToneText(tone),
+                format: getFormatText(format),
+                length: getLengthText(length),
+                contextLine: selectedText ? `- Văn bản gợi ý bổ trợ ngữ cảnh (Context): "${selectedText}"` : ""
+            }));
         }
         else if (activeTab === "translate") {
             if (!selectedText) {
@@ -442,14 +448,12 @@ ${selectedText ? `- Văn bản gợi ý bổ trợ ngữ cảnh (Context): "${se
                 return;
             }
 
-            prompt = `Hãy dịch chính xác đoạn văn sau đây sang ${targetLang}:
-"""
-${selectedText}
-"""
-
-Hãy CHỈ trả về nội dung bản dịch trực tiếp. Giữ nguyên định dạng đoạn văn, tuyệt đối không giải thích, không thêm lời chào hay bọc trong markdown codeblock.`;
+            prompt = normalizePromptSpacing(renderPrompt(promptTemplates.translate, {
+                targetLang,
+                selectedText
+            }));
         }
-
+        console.log("Generated Prompt:", prompt);
         aiResult = "";
         if (settings.activeProvider === "gemini") {
             await streamGemini(prompt);
