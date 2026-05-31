@@ -160,7 +160,7 @@ function renderHistory() {
                 <span class="px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/10 text-indigo-400 font-semibold">${label}</span>
                 <span>${time}</span>
             </div>
-            <div class="text-gray-200 break-words leading-relaxed select-text">${safeText}</div>
+            <div class="text-gray-200 wrap-break-word leading-relaxed select-text">${safeText}</div>
             <div class="flex justify-end gap-2 border-t border-white/5 pt-1.5 mt-1">
                 <button class="bg-white/5 border border-white/5 hover:bg-white/8 text-[9px] px-2 py-0.5 rounded-md cursor-pointer font-semibold transition-all" data-action="copy" data-id="${item.id}">${i18n['popup.copy'] || 'Copy'}</button>
             </div>
@@ -489,6 +489,7 @@ async function loadLocale(locale) {
         i18n = await res.json();
         i18n['_locale_code'] = locale === 'vi' ? 'vi-VN' : (locale === 'en' ? 'en-US' : locale);
         applyTranslations();
+        document.querySelectorAll("select").forEach(select => syncCustomSelect(select));
     } catch (e) {
         console.warn('Locale load failed', e);
     }
@@ -516,6 +517,7 @@ function applyTranslations() {
     }
     if (aiOutput) aiOutput.innerHTML = i18n['popup.waiting'] || aiOutput.innerHTML;
     updateModelLabel();
+    document.querySelectorAll("select").forEach(select => syncCustomSelect(select));
     requestPopupResize();
 }
 // update document title if provided

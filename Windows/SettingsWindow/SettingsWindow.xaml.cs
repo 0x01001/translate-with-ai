@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Interop;
 
 namespace ReWrite
 {
@@ -36,6 +37,31 @@ namespace ReWrite
             };
 
             InitializeWebViewAsync();
+        }
+
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+
+            try
+            {
+                var wih = new WindowInteropHelper(this);
+
+                int roundCorners = NativeMethods.DWMWCP_ROUND;
+                NativeMethods.DwmSetWindowAttribute(
+                    wih.Handle,
+                    NativeMethods.DWMWA_WINDOW_CORNER_PREFERENCE,
+                    ref roundCorners,
+                    sizeof(int));
+
+                int darkMode = 1;
+                NativeMethods.DwmSetWindowAttribute(
+                    wih.Handle,
+                    NativeMethods.DWMWA_USE_IMMERSIVE_DARK_MODE,
+                    ref darkMode,
+                    sizeof(int));
+            }
+            catch { }
         }
 
         private void OnLocaleChanged(string locale)

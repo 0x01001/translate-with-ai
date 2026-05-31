@@ -7,6 +7,283 @@
     <title data-i18n="title.popup">ReWrite Assistant</title>
     <link rel="stylesheet" href="https://rewrite.local/tailwind.css">
     <style>
+        :root {
+            --popup-bg: #0F1115;
+            --popup-panel: #11151a;
+            --popup-panel-2: #0c1014;
+            --popup-line: rgba(255, 255, 255, 0.06);
+            --popup-line-strong: rgba(255, 255, 255, 0.1);
+            --popup-muted: #9AA4B2;
+            --popup-text: #E7EEF7;
+            --popup-accent-1: #9333EA;
+            --popup-accent-2: #4F46E5;
+        }
+
+        html,
+        body {
+            color-scheme: dark;
+            background: transparent;
+        }
+
+        body {
+            color: var(--popup-text);
+        }
+
+        .app-container {
+            background:
+                radial-gradient(circle at top left, rgba(147, 51, 234, 0.14), transparent 24%),
+                radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.12), transparent 26%),
+                linear-gradient(180deg, rgba(15, 17, 21, 0.97), rgba(10, 11, 12, 0.94)) !important;
+            backdrop-filter: blur(24px);
+            color: var(--popup-text);
+        }
+
+        header,
+        nav,
+        .result-panel,
+        #source-bubble-wrapper > div,
+        #translate-source-preview,
+        #history-list > div,
+        #history-empty,
+        .advanced-options-panel,
+        #result-content-panel,
+        #normal-output-wrapper > div,
+        #diff-output-wrapper > div {
+            border-color: var(--popup-line) !important;
+        }
+
+        nav {
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid var(--popup-line) !important;
+            border-radius: 14px !important;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+        }
+
+        .tab-btn {
+            color: var(--popup-muted) !important;
+            background: transparent !important;
+            border: 1px solid transparent !important;
+        }
+
+        .tab-btn:hover {
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .tab-btn.active {
+            color: #ffffff !important;
+            background: linear-gradient(90deg, rgba(147, 51, 234, 0.22), rgba(79, 70, 229, 0.22)) !important;
+            border-color: rgba(147, 51, 234, 0.18) !important;
+        }
+
+        .result-panel {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01)) !important;
+            border: 1px solid var(--popup-line) !important;
+            box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22);
+        }
+
+        .result-panel.loading::before {
+            background: conic-gradient(from 0deg,
+                    var(--popup-accent-1) 0%,
+                    #7c3aed 18%,
+                    var(--popup-accent-2) 36%,
+                    #0ea5e9 54%,
+                    #22c55e 72%,
+                    var(--popup-accent-1) 100%);
+        }
+
+        .result-panel.loading::after {
+            background: #0f1115;
+        }
+
+        .advanced-toggle-btn,
+        #btn-show-result,
+        #btn-show-diff,
+        #btn-clear-history,
+        #btn-copy-result,
+        #btn-retry,
+        #btn-replace,
+        #btn-generate {
+            border-color: var(--popup-line) !important;
+        }
+
+        .advanced-toggle-btn,
+        #btn-show-result,
+        #btn-show-diff,
+        #btn-clear-history,
+        #btn-copy-result,
+        #btn-retry {
+            background-color: rgba(255, 255, 255, 0.03) !important;
+            color: var(--popup-text) !important;
+        }
+
+        .advanced-toggle-btn:hover,
+        #btn-show-result:hover,
+        #btn-show-diff:hover,
+        #btn-clear-history:hover,
+        #btn-copy-result:hover,
+        #btn-retry:hover {
+            background-color: rgba(255, 255, 255, 0.06) !important;
+        }
+
+        #btn-replace,
+        #btn-generate {
+            background: linear-gradient(90deg, var(--popup-accent-1), var(--popup-accent-2)) !important;
+            box-shadow: 0 10px 24px rgba(79, 70, 229, 0.22) !important;
+        }
+
+        textarea,
+        select,
+        input {
+            color-scheme: dark;
+        }
+
+        select {
+            background-color: var(--popup-panel-2) !important;
+            color: var(--popup-text) !important;
+            border-color: var(--popup-line) !important;
+            border-radius: 8px !important;
+            min-height: 30px;
+            padding: 0.28rem 0.55rem;
+        }
+
+        select:focus {
+            border-color: rgba(147, 51, 234, 0.65) !important;
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.12) !important;
+        }
+
+        option {
+            background: var(--popup-panel-2);
+            color: var(--popup-text);
+        }
+
+        textarea {
+            background: rgba(255, 255, 255, 0.02) !important;
+            color: var(--popup-text) !important;
+            border-color: var(--popup-line) !important;
+        }
+
+        #source-preview,
+        #translate-source-preview,
+        #ai-output,
+        #diff-output,
+        #history-empty,
+        #history-list > div {
+            background: rgba(255, 255, 255, 0.02) !important;
+            color: var(--popup-text) !important;
+            border-color: var(--popup-line) !important;
+        }
+
+        #model-label,
+        .text-gray-400,
+        .text-gray-500,
+        .text-gray-200\/80 {
+            color: var(--popup-muted) !important;
+        }
+
+        .text-indigo-400,
+        .text-indigo-500,
+        .text-indigo-600 {
+            color: #a78bfa !important;
+        }
+
+        .custom-select-shell {
+            position: relative;
+            width: 100%;
+        }
+
+        .custom-select-trigger {
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 9px;
+            border: 1px solid var(--popup-line) !important;
+            background: var(--popup-panel-2) !important;
+            color: var(--popup-text) !important;
+            padding: 0.3rem 0.55rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            cursor: pointer;
+            font: inherit;
+            text-align: left;
+            box-shadow: none !important;
+            min-height: 30px;
+        }
+
+        .custom-select-trigger:focus {
+            border-color: rgba(147, 51, 234, 0.65) !important;
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.12) !important;
+        }
+
+        .custom-select-value {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .custom-select-chevron {
+            color: var(--popup-muted);
+            font-size: 10px;
+            flex: 0 0 auto;
+        }
+
+        .custom-select-menu {
+            position: fixed;
+            left: 0;
+            right: 0;
+            top: 0;
+            z-index: 9999;
+            display: none;
+            max-height: 180px;
+            overflow: auto;
+            padding: 4px;
+            border: 1px solid var(--popup-line);
+            border-radius: 10px;
+            background: #0b0f14;
+            box-shadow: 0 18px 36px rgba(0, 0, 0, 0.34);
+        }
+
+        .custom-select-shell.open-up .custom-select-menu {
+            top: auto;
+            bottom: auto;
+        }
+
+        .custom-select-shell.open .custom-select-menu {
+            display: block;
+        }
+
+        .custom-select-option {
+            width: 100%;
+            box-sizing: border-box;
+            border: 0;
+            border-radius: 8px;
+            padding: 0.4rem 0.55rem;
+            background: transparent;
+            color: var(--popup-text) !important;
+            text-align: left;
+            cursor: pointer;
+            font: inherit;
+            font-size: 11px;
+            line-height: 1.25;
+        }
+
+        .custom-select-option:hover,
+        .custom-select-option[aria-selected="true"] {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .custom-select-option .option-secondary {
+            display: block;
+            margin-top: 2px;
+            font-size: 11px;
+            color: var(--popup-muted);
+        }
+
+        .custom-select-hidden {
+            display: none !important;
+        }
+
         /* PANEL */
         .result-panel {
             position: relative;
