@@ -80,11 +80,19 @@ Flags: uninsdeletekey
 [Run]
 Filename: "{app}\{#AppExeName}"; Flags: nowait postinstall skipifsilent
 
+
 [Code]
 
 var
   LinkLabel: TLabel;
   LangPage: TInputOptionWizardPage;
+
+function IsSilentMode(): Boolean;
+begin
+  Result :=
+    (Pos('/SILENT', UpperCase(GetCmdTail)) > 0) or
+    (Pos('/VERYSILENT', UpperCase(GetCmdTail)) > 0);
+end;
 
 procedure OpenGitHub(Sender: TObject);
 var
@@ -103,9 +111,9 @@ end;
 
 procedure InitializeWizard();
 begin
-  { --- BMP UI is handled by Setup section (WizardImageFile / WizardSmallImageFile) --- }
+  if IsSilentMode() then
+    Exit;
 
-  { --- Language selection for app --- }
   LangPage := CreateInputOptionPage(
     wpWelcome,
     'ReWrite Language',
@@ -126,7 +134,6 @@ begin
 
   LangPage.Values[0] := True;
 
-  { --- Link label (no button, no layout issue) --- }
   LinkLabel := TLabel.Create(WizardForm);
   LinkLabel.Parent := WizardForm;
 
@@ -143,6 +150,12 @@ end;
 
 function GetSelectedLocale(): string;
 begin
+  if IsSilentMode() then
+  begin
+    Result := 'en';
+    Exit;
+  end;
+
   if LangPage.Values[1] then Result := 'vi'
   else if LangPage.Values[2] then Result := 'fr'
   else if LangPage.Values[3] then Result := 'de'
@@ -160,6 +173,7 @@ begin
   if CurStep = ssPostInstall then
   begin
     Dir := ExpandConstant('{localappdata}\ReWrite');
+
     if not DirExists(Dir) then
       ForceDirectories(Dir);
 
