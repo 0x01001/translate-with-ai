@@ -546,7 +546,7 @@ async function streamGemini(prompt) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             system_instruction: {
-                parts: [{ text: "You are a professional writing assistant. You MUST always write in the same language as the user's input text. Never translate or switch languages unless explicitly asked to translate." }]
+                parts: [{ text: "You are a professional writing assistant. You MUST always write in the same language as the user's input text. Never translate or switch to another language unless explicitly asked to translate." }]
             },
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: { temperature: 0.3 }
@@ -658,7 +658,7 @@ async function streamOpenAI(prompt) {
         body: JSON.stringify({
             model: settings.openaiModel,
             messages: [
-                { role: "system", content: "You are a professional writing assistant. You MUST always write in the same language as the user's input text. Never translate or switch languages unless explicitly asked to translate." },
+                { role: "system", content: "You are a professional writing assistant. You MUST always write in the same language as the user's input text. Never translate or switch to another language unless explicitly asked to translate." },
                 { role: "user", content: prompt }
             ],
             stream: true,
