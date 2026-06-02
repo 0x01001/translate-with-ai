@@ -422,7 +422,7 @@ async function startAIProcess() {
                 tone: getToneText(tone),
                 format: getFormatText(format),
                 length: getLengthText(length),
-                customPromptLine: customPrompt ? `- Yêu cầu đặc biệt bổ sung: "${customPrompt}"` : "",
+                customPromptLine: customPrompt ? `- Additional special request: "${customPrompt}"` : "",
                 selectedText
             }));
         }
@@ -438,7 +438,7 @@ async function startAIProcess() {
                 tone: getToneText(tone),
                 format: getFormatText(format),
                 length: getLengthText(length),
-                contextLine: selectedText ? `- Văn bản gợi ý bổ trợ ngữ cảnh (Context): "${selectedText}"` : ""
+                contextLine: selectedText ? `- Additional context text: "${selectedText}"` : ""
             }));
         }
         else if (activeTab === "translate") {
@@ -713,32 +713,32 @@ function renderStreamingText(text, isFinished = false) {
 
 function getToneText(tone) {
     const tones = {
-        professional: "Chuyên nghiệp, chuẩn mực, lịch sự, khoa học",
-        casual: "Thân thiện, gần gũi, giao tiếp hàng ngày, tự nhiên",
-        academic: "Học thuật, trang trọng, sử dụng từ ngữ nghiên cứu, chuẩn cấu trúc",
-        creative: "Sáng tạo, bay bổng, sinh động, dùng nhiều liên tưởng phóng khoáng",
-        humorous: "Hài hước, dí dỏm, tạo tiếng cười nhẹ nhàng, dễ chịu",
-        direct: "Thẳng thắn, ngắn gọn, súc tích, đi thẳng vào vấn đề chính"
+        professional: "Professional, formal, polite, scientific",
+        casual: "Friendly, conversational, everyday, natural",
+        academic: "Academic, formal, using research vocabulary, structured",
+        creative: "Creative, vivid, expressive, imaginative",
+        humorous: "Humorous, witty, light-hearted, cheerful",
+        direct: "Direct, concise, to the point, straightforward"
     };
     return tones[tone] || tone;
 }
 
 function getFormatText(format) {
     const formats = {
-        paragraph: "Đoạn văn trôi chảy, liền mạch",
-        bullets: "Danh sách gạch đầu dòng, trình bày các ý chính rõ ràng",
-        email: "Bức thư điện tử (Email) chuyên nghiệp có tiêu đề, mở đầu và kết thư",
-        short: "Tin nhắn ngắn gọn, súc tích dành cho chat mạng xã hội hoặc SMS",
-        essay: "Bài luận văn/bài viết chi tiết, đầy đủ luận điểm sâu sắc"
+        paragraph: "Smooth, flowing paragraph",
+        bullets: "Bullet list, clearly presenting key points",
+        email: "Professional email with subject line, opening and closing",
+        short: "Short, concise message for chat or SMS",
+        essay: "Detailed essay with thorough arguments and analysis"
     };
     return formats[format] || format;
 }
 
 function getLengthText(length) {
     const lengths = {
-        short: "Ngắn gọn, súc tích nhất có thể",
-        medium: "Độ dài vừa phải, cân đối đầy đủ thông tin",
-        long: "Chi tiết, mở rộng thông tin, viết dài và đầy đủ hơn"
+        short: "Short, as concise as possible",
+        medium: "Medium length, well-balanced with adequate information",
+        long: "Long, detailed, expanded with comprehensive information"
     };
     return lengths[length] || length;
 }
