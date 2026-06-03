@@ -39,7 +39,8 @@ Click the preview image below to watch the complete setup and features guide on 
 
 ### 📝 Compose Mode
 * Generate high-quality content from scratch. Simply input a brief prompt or core idea, select your preferred tone/format, and let the AI draft a complete piece for you in seconds.
-
+<img width="1376" height="768" alt="main-pop_up_screenshot" src="https://github.com/user-attachments/assets/2f6d7a59-4be4-4c32-a933-c5b34b9fbc4d" />
+<img width="1376" height="768" alt="setting_screenshot" src="https://github.com/user-attachments/assets/4556cd6b-6181-4a5d-aaa6-a207b2815c20" />
 ## ⚡ UI/UX Workflow Breakthrough
 
 * **⚡ Zero Context Switching:** The ultra-lightweight pop-up window triggers right over your current workspace via global hotkeys, preserving your mental focus and boosting overall productivity by an estimated **200% - 300%**.
@@ -70,6 +71,12 @@ Contributions, bug reports (Issues), and feature requests (Pull Requests) are hi
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+## 🏬 Microsoft Store
+
+I am thrilled to announce that my app is now officially live on the Microsoft Store! 🥳
+
+👉 **Get it here:** https://apps.microsoft.com/detail/9P97QQ6048RX
 
 ## 📊 Star History
 
