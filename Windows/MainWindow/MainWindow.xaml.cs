@@ -277,13 +277,13 @@ namespace ReWrite
             _trayIcon.DoubleClick += (s, e) => OpenSettings();
         }
 
-        private void TrayIcon_MouseUp(object? sender, System.Windows.Forms.MouseEventArgs e)
+        private async void TrayIcon_MouseUp(object? sender, System.Windows.Forms.MouseEventArgs e)
         {
             if (e.Button == System.Windows.Forms.MouseButtons.Right)
-                ShowTrayMenu();
+                await ShowTrayMenuAsync();
         }
 
-        private void ShowTrayMenu()
+        private async Task ShowTrayMenuAsync()
         {
             if (_mainHwnd == IntPtr.Zero)
                 return;
@@ -296,7 +296,7 @@ namespace ReWrite
             {   
                 NativeMethods.AppendMenu(menu, NativeMethods.MF_STRING, TRAY_MENU_OPEN_SETTINGS, Localization.Get("tray.open_settings"));
                 uint autostartFlags = NativeMethods.MF_STRING;
-                if (StartupManager.IsAutostartEnabled())
+                if (await StartupManager.IsAutostartEnabledAsync())
                     autostartFlags |= NativeMethods.MF_CHECKED;
                 NativeMethods.AppendMenu(menu, autostartFlags, TRAY_MENU_AUTOSTART, Localization.Get("tray.autostart"));
 
@@ -326,10 +326,10 @@ namespace ReWrite
                 }
                 else if (commandId == TRAY_MENU_AUTOSTART)
                 {
-                    if (StartupManager.IsAutostartEnabled())
-                        StartupManager.DisableAutostart();
+                    if (await StartupManager.IsAutostartEnabledAsync())
+                        await StartupManager.DisableAutostartAsync();
                     else
-                        StartupManager.EnableAutostart();
+                        await StartupManager.EnableAutostartAsync();
                 }
                 else if (commandId == TRAY_MENU_EXIT)
                 {

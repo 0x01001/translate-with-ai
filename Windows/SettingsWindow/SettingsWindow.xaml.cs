@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 
@@ -142,7 +143,7 @@ namespace ReWrite
 
         // ── Web message routing ───────────────────────────────────────────────────
 
-        private void WebView_WebMessageReceived(
+        private async void WebView_WebMessageReceived(
             object? sender,
             Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e)
         {
@@ -158,7 +159,7 @@ namespace ReWrite
                     SendLocaleToWebView(Localization.CurrentLocale);
                     return;
                 }
-                if (action == "get_startup")       { SendStartupStatus(); }
+                if (action == "get_startup")       { await SendStartupStatusAsync(); }
                 else if (action == "get_hotkey")   { SendHotkeyStatus(); }
                 else if (action == "set_hotkey")
                 {
@@ -189,9 +190,9 @@ namespace ReWrite
                 else if (action == "set_startup")
                 {
                     bool enabled = doc.RootElement.GetProperty("enabled").GetBoolean();
-                    if (enabled) StartupManager.EnableAutostart();
-                    else         StartupManager.DisableAutostart();
-                    SendStartupStatus();
+                    if (enabled) await StartupManager.EnableAutostartAsync();
+                    else         await StartupManager.DisableAutostartAsync();
+                    await SendStartupStatusAsync();
                 }
             }
             catch (Exception ex)
@@ -234,12 +235,13 @@ namespace ReWrite
             base.OnClosed(e);
         }
 
-        private void SendStartupStatus()
+        private async Task SendStartupStatusAsync()
         {
             if (!_isInitialized) return;
             try
             {
-                var payload = new { @event = "startup_status", enabled = StartupManager.IsAutostartEnabled() };
+                bool enabled = await StartupManager.IsAutostartEnabledAsync();
+                var payload = new { @event = "startup_status", enabled };
                 webView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(payload));
             }
             catch { }
