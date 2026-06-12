@@ -1,0 +1,8 @@
+import Cocoa
+
+// Menu bar agent app: no Dock icon, lives in the status bar.
+let app = NSApplication.shared
+let delegate = AppDelegate()
+app.delegate = delegate
+app.setActivationPolicy(.accessory)
+app.run()
