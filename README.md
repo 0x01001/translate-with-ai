@@ -1,7 +1,7 @@
 # 🚀 ReWrite AI Desktop App
 
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/hynady/ReWrite?color=7cc0f4&style=for-the-badge)](https://github.com/hynady/ReWrite)
-[![Platform](https://img.shields.io/badge/platform-Windows-blue?style=for-the-badge&logo=windows)](https://github.com/hynady/ReWrite)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-blue?style=for-the-badge&logo=windows)](https://github.com/hynady/ReWrite)
 [![AI Powered](https://img.shields.io/badge/Power_by-Gemini_%26_OpenAI-orange?style=for-the-badge&logo=google-gemini)](https://github.com/hynady/ReWrite)
 [![Speed](https://img.shields.io/badge/Speedup-200%25--300%25-brightgreen?style=for-the-badge&logo=rocket)](https://github.com/hynady/ReWrite)
 
@@ -49,6 +49,8 @@ Click the preview image below to watch the complete setup and features guide on 
 
 ## 🛠️ Installation Guide
 
+### Windows
+
 1. Download the latest version executable from the [Releases](https://github.com/hynady/ReWrite/releases) section.
 2. Run the `ReWrite <version>.exe` installer (the application will self-configure within seconds).
 3. Launch the app and head over to **Settings**:
@@ -56,10 +58,30 @@ Click the preview image below to watch the complete setup and features guide on 
    * Choose your preferred model line (e.g., `gemini-1.5-flash-lite`).
    * Map your global hotkeys and toggle *Launch on Windows Startup* if desired.
 
+### macOS
+
+The macOS version is built from source (native Swift/AppKit shell sharing the same UI):
+
+```bash
+cd macos
+./build-app.sh
+mv dist/ReWrite.app /Applications/
+open /Applications/ReWrite.app
+```
+
+ReWrite runs as a **menu bar app** (look for the logo near the clock — there is no Dock icon). On first use macOS will ask for **Accessibility** access, which is required to capture the selected text and paste the result back. See [`macos/README.md`](macos/README.md) for full setup, usage and troubleshooting.
+
 ## ⌨️ Default Hotkeys
+
+**Windows**
 
 * **`Ctrl + Shift + Space`**: Toggle the main ReWrite AI control dashboard.
 * **`Ctrl + Shift + A`**: Instantly trigger AI processing for the currently highlighted text.
+
+**macOS**
+
+* **`Cmd + Shift + A`**: Trigger the AI popup for the currently highlighted text.
+
 *(You can fully customize these keybindings within the application settings to match your personal habits).*
 
 ## 🤝 Contributing
