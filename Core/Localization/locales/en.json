@@ -9,8 +9,8 @@
   "welcome.loading": "Starting application...",
   "welcome.ready": "Ready. You may close this window.",
   "button.close": "Close",
-  "button.view_tutorial": "View tutorial"
-  ,"label.model": "Powered by AI",
+  "button.view_tutorial": "View tutorial",
+  "label.model": "Powered by AI",
   "tab.rewrite": "Rewrite",
   "tab.write": "Write",
   "tab.translate": "Translate",
@@ -30,7 +30,7 @@
   "settings.save_notice": "Settings saved successfully!",
   "button.save_settings": "Save settings",
   "settings.hotkey_label": "Hotkey",
-  "settings.hotkey_hint": "Focus the field and press preferred key combination (e.g. Ctrl+Alt+K)",
+  "settings.hotkey_hint": "Focus the field and press preferred key combination (default: Alt+X).",
   "settings.provider_label": "Primary provider",
   "settings.autostart": "Start with Windows",
   "hotkey.invalid": "Invalid hotkey.",
@@ -39,72 +39,92 @@
   "tutorial.no_video": "No video attached",
   "tutorial.hint": "You can attach a YouTube embed link via query ?video=... or localStorage.",
   "tutorial.start": "Get started with ReWrite",
-  "button.skip": "Skip"
-  ,"tray.tooltip": "ReWrite - Active",
+  "button.skip": "Skip",
+  "tray.tooltip": "ReWrite - Active",
   "tray.open_settings": "Configuration",
   "tray.autostart": "Start with Windows",
-  "tray.exit": "Exit"
-  ,"popup.selected_label":"Selected text:",
-  "popup.history_empty":"No saved items to display.",
-  "popup.clear_history":"Clear all",
-  "popup.result_preparing":"Preparing...",
-  "popup.copy":"Copy",
-  "popup.error.no_selection":"Error: No selected text found. Please close this window, select text outside and press the hotkey.",
-  "popup.error.prompt_required":"Error: Please enter a prompt or topic to write.",
-  "popup.error.no_text_for_translate":"Error: No text found to translate. Please select text outside and press the hotkey.",
-  "popup.error.api_connection":"API connection error: {0}<br>Please open Settings (from tray) to configure API keys.",
-  "popup.error.gemini_key_missing":"Gemini API key is not configured. Please set it in Settings.",
-  "popup.error.openai_key_missing":"OpenAI API key is not configured. Please set it in Settings.",
-  "settings.gemini_key_label":"API Key"
-  ,"settings.gemini_key_placeholder":"Enter your Gemini API key..."
-  ,"settings.gemini_model_label":"Model Name"
-  ,"settings.gemini_model_placeholder":"e.g. gemini-1.5-flash"
-  ,"settings.openai_key_label":"API Key"
-  ,"settings.openai_key_placeholder":"Enter your OpenAI API key..."
-  ,"settings.openai_model_label":"Model Name"
-  ,"settings.openai_model_placeholder":"e.g. gpt-4o-mini"
-  ,"settings.hotkey_placeholder":"Focus the field and press the key combination (e.g. Ctrl+Alt+K)"
-  ,"button.advanced_toggle":"Advanced options"
-  ,"label.tone":"Tone"
-  ,"label.format":"Format"
-  ,"label.length":"Length"
-  ,"label.rewrite_prompt":"Additional instructions"
-  ,"placeholder.rewrite_example":"e.g. Keep original tone and formatting..."
-  ,"label.write_topic":"Topic / Prompt"
-  ,"placeholder.write_topic":"Enter topic or prompt here..."
-  ,"option.default":"Default"
-  ,"tone.professional":"Professional"
-  ,"tone.casual":"Casual"
-  ,"tone.academic":"Academic"
-  ,"tone.creative":"Creative"
-  ,"tone.humorous":"Humorous"
-  ,"tone.direct":"Direct"
-  ,"format.paragraph":"Paragraph"
-  ,"format.bullets":"Bulleted list"
-  ,"format.email":"Email"
-  ,"format.short":"Short message"
-  ,"format.essay":"Long article"
-  ,"length.short":"Short"
-  ,"length.medium":"Medium"
-  ,"length.long":"Long"
-  ,"lang.vi":"Vietnamese"
-  ,"lang.en":"English"
-  ,"lang.ja":"Japanese (日本語)"
-  ,"lang.zh-CN":"Chinese Simplified (简体中文)"
-  ,"lang.zh-TW":"Chinese Traditional (繁體中文)"
-  ,"lang.fr":"French (Français)"
-  ,"lang.de":"German (Deutsch)"
-  ,"lang.ko":"Korean (한국어)"
-  ,"popup.history_title":"Temporary history"
-  ,"popup.result_title":"AI results"
-  ,"button.show_result":"Result"
-  ,"button.show_diff":"Compare (Diff)"
-  ,"button.retry":"Retry"
-  ,"button.replace":"Replace with result"
-  ,"button.generate":"Start"
-  ,"label.translate_source":"Text to translate"
-  ,"label.translate_to":"Translate to language"
-  ,"settings.language":"Language"
-  ,"provider.gemini":"Gemini (Google)"
-  ,"provider.openai":"OpenAI"
+  "tray.exit": "Exit",
+  "popup.selected_label": "Selected text:",
+  "popup.history_empty": "No saved items to display.",
+  "popup.clear_history": "Clear all",
+  "popup.result_preparing": "Preparing...",
+  "popup.copy": "Copy",
+  "popup.error.no_selection": "Error: No selected text found. Please close this window, select text outside and press the hotkey.",
+  "popup.error.prompt_required": "Error: Please enter a prompt or topic to write.",
+  "popup.error.no_text_for_translate": "Error: No text found to translate. Please select text outside and press the hotkey.",
+  "popup.error.api_connection": "API connection error: {0}<br>Please open Settings (from tray) to configure API keys.",
+  "popup.error.gemini_key_missing": "Gemini API key is not configured. Please set it in Settings.",
+  "popup.error.openai_key_missing": "OpenAI API key is not configured. Please set it in Settings.",
+  "settings.gemini_key_label": "API Key",
+  "settings.gemini_key_placeholder": "Enter your Gemini API key...",
+  "settings.gemini_model_label": "Model Name",
+  "settings.gemini_model_placeholder": "e.g. gemini-1.5-flash",
+  "settings.openai_key_label": "API Key",
+  "settings.openai_key_placeholder": "Enter your OpenAI API key...",
+  "settings.openai_model_label": "Model Name",
+  "settings.openai_model_placeholder": "e.g. gpt-4o-mini",
+  "settings.hotkey_placeholder": "Focus the field and press the key combination (default: Alt+X)",
+  "button.advanced_toggle": "Advanced options",
+  "label.tone": "Tone",
+  "label.format": "Format",
+  "label.length": "Length",
+  "label.rewrite_prompt": "Additional instructions",
+  "placeholder.rewrite_example": "e.g. Keep original tone and formatting...",
+  "label.write_topic": "Topic / Prompt",
+  "placeholder.write_topic": "Enter topic or prompt here...",
+  "option.default": "Default",
+  "tone.professional": "Professional",
+  "tone.casual": "Casual",
+  "tone.academic": "Academic",
+  "tone.creative": "Creative",
+  "tone.humorous": "Humorous",
+  "tone.direct": "Direct",
+  "format.paragraph": "Paragraph",
+  "format.bullets": "Bulleted list",
+  "format.email": "Email",
+  "format.short": "Short message",
+  "format.essay": "Long article",
+  "length.short": "Short",
+  "length.medium": "Medium",
+  "length.long": "Long",
+  "lang.vi": "Vietnamese",
+  "lang.en": "English",
+  "lang.ja": "Japanese (日本語)",
+  "lang.zh-CN": "Chinese Simplified (简体中文)",
+  "lang.zh-TW": "Chinese Traditional (繁體中文)",
+  "lang.fr": "French (Français)",
+  "lang.de": "German (Deutsch)",
+  "lang.ko": "Korean (한국어)",
+  "popup.history_title": "Temporary history",
+  "popup.result_title": "AI results",
+  "button.show_result": "Result",
+  "button.show_diff": "Compare (Diff)",
+  "button.retry": "Retry",
+  "button.replace": "Replace with result",
+  "button.generate": "Start",
+  "label.translate_source": "Text to translate",
+  "label.translate_to": "Translate to language",
+  "settings.language": "Language",
+  "provider.gemini": "Gemini (Google)",
+  "provider.openai": "OpenAI",
+  "provider.router": "OpenRouter / 9router",
+  "settings.router_key_label": "API Key",
+  "settings.router_key_placeholder": "Enter your OpenRouter / 9router API key...",
+  "settings.router_base_url_label": "Base URL",
+  "settings.router_base_url_placeholder": "e.g. https://openrouter.ai/api/v1",
+  "settings.router_model_label": "Model Name",
+  "settings.router_model_hint": "Choose a saved model or add a custom OpenAI-compatible model id.",
+  "settings.router_add_model_placeholder": "e.g. anthropic/claude-3.5-sonnet",
+  "settings.router_add_model": "Add model",
+  "settings.router_remove_model": "Remove model",
+  "popup.error.router_key_missing": "OpenRouter / 9router API key is not configured. Please set it in Settings.",
+  "settings.quick_translate_target_label": "Quick Translate target",
+  "settings.quick_translate_target_hint": "Default language used when translating selected text from the hotkey.",
+  "settings.quick_translate_behavior_label": "After quick translate",
+  "settings.quick_translate_auto_paste": "Automatically paste translated text over the selection",
+  "settings.quick_translate_auto_paste_hint": "Turn off to show the popup result first instead of replacing text automatically.",
+  "quick_translate.loading": "Translating...",
+  "quick_translate.error.no_selection": "No selected text found. Select text and press the hotkey again.",
+  "quick_translate.error.failed": "Translation failed. Please check your provider settings and try again.",
+  "quick_translate.error.empty_result": "The translation result was empty. Nothing was pasted."
 }

@@ -2,7 +2,7 @@ import Cocoa
 
 /// Port of App.xaml.cs + the controller logic of MainWindow.xaml.cs:
 /// single-instance guard, locale bootstrap, global hotkey, status bar item,
-/// and the hotkey → copy selection → popup flow.
+/// and the hotkey → copy selection → quick translate flow.
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var popupController: PopupWindowController!
     private var settingsController: SettingsWindowController!
@@ -59,7 +59,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         var parseError = ""
         let persisted = HotkeyPersistence.load()
         currentHotkey = persisted.flatMap { HotkeyParser.parse($0, error: &parseError) }
-            ?? HotkeyParser.parse("Cmd+Shift+A", error: &parseError)!
+            ?? HotkeyParser.parse("Option+X", error: &parseError)!
 
         let registered = HotKeyManager.shared.register(currentHotkey)
         NSLog("ReWrite: hotkey \(currentHotkey.normalized) registered=\(registered) accessibilityTrusted=\(AccessibilityPermission.isTrusted)")
@@ -88,7 +88,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return nil
     }
 
-    // ── Hotkey handler: capture selection, show popup ─────────────────────────
+    // ── Hotkey handler: capture selection, quick translate ─────────────────────
 
     private func hotKeyPressed() {
         // Remember the app that has focus before our panel appears.
@@ -117,7 +117,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 Pasteboard.write(originalClipboard)
             }
 
-            self.popupController.show(text: selectedText, target: targetApp)
+            self.popupController.quickTranslate(text: selectedText, target: targetApp)
         }
     }
 

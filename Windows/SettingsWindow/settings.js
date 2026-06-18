@@ -1,10 +1,32 @@
 // State
+const DEFAULT_ROUTER_BASE_URL = "https://openrouter.ai/api/v1";
+const DEFAULT_ROUTER_MODELS = [
+    "openai/gpt-4o-mini",
+    "openai/gpt-4o",
+    "anthropic/claude-3.5-sonnet",
+    "anthropic/claude-3.5-haiku",
+    "google/gemini-flash-1.5"
+];
+const SUPPORTED_PROVIDERS = ["gemini", "openai", "router"];
+const DEFAULT_QUICK_TRANSLATE_TARGET_LANG = "Tiếng Việt";
+const PROVIDER_LABEL_KEYS = {
+    gemini: "provider.gemini",
+    openai: "provider.openai",
+    router: "provider.router"
+};
+
 let settings = {
     geminiKey: "",
     geminiModel: "gemini-1.5-flash",
     openaiKey: "",
     openaiModel: "gpt-4o-mini",
+    routerKey: "",
+    routerBaseUrl: DEFAULT_ROUTER_BASE_URL,
+    routerModel: DEFAULT_ROUTER_MODELS[0],
+    routerModels: [...DEFAULT_ROUTER_MODELS],
     activeProvider: "gemini",
+    quickTranslateAutoPaste: true,
+    quickTranslateTargetLang: DEFAULT_QUICK_TRANSLATE_TARGET_LANG,
     autostart: true,
     locale: "en"
 };
@@ -17,17 +39,60 @@ const activeProviderInput = document.getElementById("active-provider");
 const activeProviderLabel = document.getElementById("active-provider-label");
 const geminiPanel = document.getElementById("gemini-panel");
 const openaiPanel = document.getElementById("openai-panel");
+const routerPanel = document.getElementById("router-panel");
 const activeProviderTrigger = document.getElementById("active-provider-trigger");
 const activeProviderText = document.getElementById("active-provider-text");
 const activeProviderMenu = document.getElementById("active-provider-menu");
+const routerModelInput = document.getElementById("router-model");
+const routerModelTrigger = document.getElementById("router-model-trigger");
+const routerModelText = document.getElementById("router-model-text");
+const routerModelMenu = document.getElementById("router-model-menu");
+const routerModelAddInput = document.getElementById("router-model-add");
+const routerModelAddBtn = document.getElementById("router-model-add-btn");
+const routerModelList = document.getElementById("router-model-list");
 const localeTrigger = document.getElementById("select-locale-trigger");
 const localeText = document.getElementById("select-locale-text");
 const localeMenu = document.getElementById("select-locale-menu");
+const quickTranslateAutoPasteInput = document.getElementById("quick-translate-auto-paste");
+const quickTranslateTargetLangInput = document.getElementById("quick-translate-target-lang");
+
+function normalizeRouterModels(models, selectedModel) {
+    const source = Array.isArray(models) && models.length > 0 ? models : DEFAULT_ROUTER_MODELS;
+    const normalized = [];
+
+    source.forEach(model => {
+        const value = String(model || "").trim();
+        if (value && !normalized.includes(value)) normalized.push(value);
+    });
+
+    const selected = String(selectedModel || "").trim();
+    if (selected && !normalized.includes(selected)) normalized.unshift(selected);
+
+    return normalized.length > 0 ? normalized : [DEFAULT_ROUTER_MODELS[0]];
+}
+
+function normalizeSettings() {
+    settings.routerBaseUrl = String(settings.routerBaseUrl || DEFAULT_ROUTER_BASE_URL).trim() || DEFAULT_ROUTER_BASE_URL;
+    settings.routerModel = String(settings.routerModel || DEFAULT_ROUTER_MODELS[0]).trim() || DEFAULT_ROUTER_MODELS[0];
+    settings.routerModels = normalizeRouterModels(settings.routerModels, settings.routerModel);
+
+    if (!settings.routerModels.includes(settings.routerModel)) {
+        settings.routerModel = settings.routerModels[0];
+    }
+
+    if (!SUPPORTED_PROVIDERS.includes(settings.activeProvider)) {
+        settings.activeProvider = "gemini";
+    }
+
+    settings.quickTranslateAutoPaste = settings.quickTranslateAutoPaste !== false;
+    settings.quickTranslateTargetLang = String(settings.quickTranslateTargetLang || DEFAULT_QUICK_TRANSLATE_TARGET_LANG).trim() || DEFAULT_QUICK_TRANSLATE_TARGET_LANG;
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     refreshAppSettings();
-    updateProviderUI();
     bindDropdowns();
+    bindRouterModelControls();
+    updateProviderUI();
     
     if (window.chrome && window.chrome.webview) {
         window.chrome.webview.postMessage({ action: "ui_ready" });
@@ -65,15 +130,25 @@ function refreshAppSettings() {
         }
     }
 
+    normalizeSettings();
+
     // Sync UI from settings
     document.getElementById("gemini-key").value = settings.geminiKey || "";
     document.getElementById("gemini-model").value = settings.geminiModel || "";
     document.getElementById("openai-key").value = settings.openaiKey || "";
     document.getElementById("openai-model").value = settings.openaiModel || "";
+    document.getElementById("router-key").value = settings.routerKey || "";
+    document.getElementById("router-base-url").value = settings.routerBaseUrl || DEFAULT_ROUTER_BASE_URL;
+    if (routerModelInput) routerModelInput.value = settings.routerModel || DEFAULT_ROUTER_MODELS[0];
     document.getElementById("active-provider").value = settings.activeProvider || "gemini";
     const localeSelect = document.getElementById('select-locale');
     if (localeSelect) localeSelect.value = settings.locale || 'en';
+    if (quickTranslateAutoPasteInput) quickTranslateAutoPasteInput.checked = settings.quickTranslateAutoPaste !== false;
+    if (quickTranslateTargetLangInput) quickTranslateTargetLangInput.value = settings.quickTranslateTargetLang || DEFAULT_QUICK_TRANSLATE_TARGET_LANG;
+
+    renderRouterModels();
     syncDropdownUI("provider", document.getElementById("active-provider").value);
+    syncDropdownUI("routerModel", routerModelInput ? routerModelInput.value : settings.routerModel);
     syncDropdownUI("locale", localeSelect ? localeSelect.value : "en");
     updateProviderUI();
 
@@ -90,11 +165,20 @@ function saveSettings() {
     settings.geminiModel = document.getElementById("gemini-model").value.trim();
     settings.openaiKey = document.getElementById("openai-key").value.trim();
     settings.openaiModel = document.getElementById("openai-model").value.trim();
+    settings.routerKey = document.getElementById("router-key").value.trim();
+    settings.routerBaseUrl = document.getElementById("router-base-url").value.trim() || DEFAULT_ROUTER_BASE_URL;
+    settings.routerModel = (routerModelInput && routerModelInput.value.trim()) || settings.routerModel || DEFAULT_ROUTER_MODELS[0];
+    settings.routerModels = normalizeRouterModels(settings.routerModels, settings.routerModel);
     settings.activeProvider = document.getElementById("active-provider").value;
+    settings.quickTranslateAutoPaste = quickTranslateAutoPasteInput ? quickTranslateAutoPasteInput.checked : true;
+    settings.quickTranslateTargetLang = (quickTranslateTargetLangInput && quickTranslateTargetLangInput.value) || DEFAULT_QUICK_TRANSLATE_TARGET_LANG;
+    normalizeSettings();
+
     const localeSelect = document.getElementById('select-locale');
     if (localeSelect) settings.locale = localeSelect.value;
     
-    localStorage.setItem("rewrite_settings", JSON.stringify(settings));
+    persistSettingsToLocalStorage();
+    renderRouterModels();
     updateProviderUI();
     
     // Toggle autostart in Windows via C#
@@ -120,6 +204,31 @@ function saveSettings() {
     showToast();
 }
 
+function syncSettingsFromForm() {
+    const valueOf = id => document.getElementById(id)?.value?.trim() || "";
+
+    settings.geminiKey = valueOf("gemini-key");
+    settings.geminiModel = valueOf("gemini-model") || settings.geminiModel || "gemini-1.5-flash";
+    settings.openaiKey = valueOf("openai-key");
+    settings.openaiModel = valueOf("openai-model") || settings.openaiModel || "gpt-4o-mini";
+    settings.routerKey = valueOf("router-key");
+    settings.routerBaseUrl = valueOf("router-base-url") || DEFAULT_ROUTER_BASE_URL;
+    settings.routerModel = (routerModelInput && routerModelInput.value.trim()) || settings.routerModel || DEFAULT_ROUTER_MODELS[0];
+    settings.activeProvider = valueOf("active-provider") || settings.activeProvider || "gemini";
+    settings.quickTranslateAutoPaste = quickTranslateAutoPasteInput ? quickTranslateAutoPasteInput.checked : true;
+    settings.quickTranslateTargetLang = (quickTranslateTargetLangInput && quickTranslateTargetLangInput.value) || settings.quickTranslateTargetLang || DEFAULT_QUICK_TRANSLATE_TARGET_LANG;
+
+    const localeSelect = document.getElementById('select-locale');
+    if (localeSelect) settings.locale = localeSelect.value;
+
+    normalizeSettings();
+}
+
+function persistSettingsToLocalStorage() {
+    syncSettingsFromForm();
+    localStorage.setItem("rewrite_settings", JSON.stringify(settings));
+}
+
 function showToast() {
     const toast = document.getElementById("settings-toast");
     if (!toast) return;
@@ -141,7 +250,7 @@ if (window.chrome && window.chrome.webview) {
             document.getElementById("system-startup").checked = data.enabled;
         }
         else if (data.event === "hotkey_status") {
-            if (hotkeyInput) hotkeyInput.value = data.hotkey || "Ctrl+Shift+A";
+            if (hotkeyInput) hotkeyInput.value = data.hotkey || "Alt+X";
         }
         else if (data.event === "hotkey_error") {
             if (hotkeyError) {
@@ -175,15 +284,25 @@ function setActiveProvider(provider) {
     updateProviderUI();
 }
 
+function getProviderLabel(provider) {
+    const key = PROVIDER_LABEL_KEYS[provider] || PROVIDER_LABEL_KEYS.gemini;
+    const fallback = {
+        gemini: "Gemini (Google)",
+        openai: "OpenAI",
+        router: "OpenRouter / 9router"
+    };
+    return i18n[key] || fallback[provider] || fallback.gemini;
+}
+
 function updateProviderUI() {
     const provider = (activeProviderInput && activeProviderInput.value) || settings.activeProvider || "gemini";
-    const geminiActive = provider === "gemini";
 
-    if (geminiPanel) geminiPanel.style.display = geminiActive ? "block" : "none";
-    if (openaiPanel) openaiPanel.style.display = geminiActive ? "none" : "block";
+    if (geminiPanel) geminiPanel.style.display = provider === "gemini" ? "block" : "none";
+    if (openaiPanel) openaiPanel.style.display = provider === "openai" ? "block" : "none";
+    if (routerPanel) routerPanel.style.display = provider === "router" ? "block" : "none";
 
     if (activeProviderLabel) {
-        activeProviderLabel.textContent = geminiActive ? (i18n['provider.gemini'] || "Gemini") : (i18n['provider.openai'] || "OpenAI");
+        activeProviderLabel.textContent = getProviderLabel(provider);
     }
 }
 
@@ -192,6 +311,10 @@ function bindDropdowns() {
         if (activeProviderInput) activeProviderInput.value = value;
         settings.activeProvider = value;
         updateProviderUI();
+    });
+
+    setupDropdown("routerModel", routerModelTrigger, routerModelMenu, value => {
+        setRouterModel(value);
     });
 
     setupDropdown("locale", localeTrigger, localeMenu, value => {
@@ -223,27 +346,38 @@ function setupDropdown(name, trigger, menu, onSelect) {
         if (!isOpen) openDropdown(trigger, menu);
     });
 
-    menu.querySelectorAll(".dropdown-option").forEach(option => {
-        option.addEventListener("click", event => {
-            event.preventDefault();
-            const value = option.getAttribute("data-value") || "";
-            onSelect(value);
-            syncDropdownUI(name, value);
-            closeAllDropdowns();
-        });
+    menu.addEventListener("click", event => {
+        const option = event.target.closest(".dropdown-option");
+        if (!option || !menu.contains(option)) return;
+
+        event.preventDefault();
+        const value = option.getAttribute("data-value") || "";
+        onSelect(value);
+        syncDropdownUI(name, value);
+        closeAllDropdowns();
     });
 }
 
+function getDropdownParts(name) {
+    if (name === "provider") {
+        return { triggerText: activeProviderText, menu: activeProviderMenu, trigger: activeProviderTrigger };
+    }
+    if (name === "routerModel") {
+        return { triggerText: routerModelText, menu: routerModelMenu, trigger: routerModelTrigger };
+    }
+    return { triggerText: localeText, menu: localeMenu, trigger: localeTrigger };
+}
+
 function syncDropdownUI(name, value) {
-    const triggerText = name === "provider" ? activeProviderText : localeText;
-    const menu = name === "provider" ? activeProviderMenu : localeMenu;
-    const trigger = name === "provider" ? activeProviderTrigger : localeTrigger;
+    const { triggerText, menu, trigger } = getDropdownParts(name);
     if (!menu || !triggerText || !trigger) return;
 
     const option = menu.querySelector(`.dropdown-option[data-value="${CSS.escape(value)}"]`);
     if (option) {
         const label = option.getAttribute("data-label-key");
         triggerText.textContent = label && i18n[label] ? i18n[label] : option.textContent.trim();
+    } else if (value) {
+        triggerText.textContent = value;
     }
 
     menu.querySelectorAll(".dropdown-option").forEach(opt => {
@@ -309,6 +443,123 @@ function refreshOpenDropdownPositions() {
 
 window.addEventListener("resize", refreshOpenDropdownPositions);
 window.addEventListener("scroll", refreshOpenDropdownPositions, true);
+
+function bindRouterModelControls() {
+    if (routerModelAddBtn) {
+        routerModelAddBtn.addEventListener("click", addRouterModelFromInput);
+    }
+
+    if (routerModelAddInput) {
+        routerModelAddInput.addEventListener("keydown", event => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                addRouterModelFromInput();
+            }
+        });
+    }
+
+    if (routerModelList) {
+        routerModelList.addEventListener("click", event => {
+            const button = event.target.closest("button[data-model]");
+            if (!button || !routerModelList.contains(button)) return;
+            removeRouterModel(button.getAttribute("data-model") || "");
+        });
+    }
+}
+
+function setRouterModel(model) {
+    const value = String(model || "").trim();
+    if (!value) return;
+
+    if (!settings.routerModels.includes(value)) {
+        settings.routerModels.push(value);
+    }
+    settings.routerModel = value;
+    if (routerModelInput) routerModelInput.value = value;
+    renderRouterModels();
+    persistSettingsToLocalStorage();
+}
+
+function addRouterModelFromInput() {
+    if (!routerModelAddInput) return;
+    const value = routerModelAddInput.value.trim();
+    if (!value) return;
+
+    setRouterModel(value);
+    routerModelAddInput.value = "";
+}
+
+function removeRouterModel(model) {
+    const value = String(model || "").trim();
+    if (!value) return;
+
+    settings.routerModels = settings.routerModels.filter(item => item !== value);
+    if (settings.routerModels.length === 0) {
+        settings.routerModels = [DEFAULT_ROUTER_MODELS[0]];
+    }
+
+    if (settings.routerModel === value || !settings.routerModels.includes(settings.routerModel)) {
+        settings.routerModel = settings.routerModels[0];
+    }
+    if (routerModelInput) routerModelInput.value = settings.routerModel;
+
+    renderRouterModels();
+    persistSettingsToLocalStorage();
+}
+
+function renderRouterModels() {
+    normalizeSettings();
+    if (routerModelInput) routerModelInput.value = settings.routerModel;
+    renderRouterModelOptions();
+    renderRouterModelList();
+    syncDropdownUI("routerModel", settings.routerModel);
+}
+
+function renderRouterModelOptions() {
+    if (!routerModelMenu) return;
+    routerModelMenu.innerHTML = "";
+
+    settings.routerModels.forEach(model => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.className = "dropdown-option";
+        option.setAttribute("data-value", model);
+        option.setAttribute("aria-selected", model === settings.routerModel ? "true" : "false");
+
+        const label = document.createElement("span");
+        label.textContent = model;
+        option.appendChild(label);
+        routerModelMenu.appendChild(option);
+    });
+}
+
+function renderRouterModelList() {
+    if (!routerModelList) return;
+    routerModelList.innerHTML = "";
+    const removeLabel = i18n['settings.router_remove_model'] || "Remove model";
+
+    settings.routerModels.forEach(model => {
+        const pill = document.createElement("span");
+        pill.className = "model-pill";
+        if (model === settings.routerModel) pill.classList.add("active");
+
+        const name = document.createElement("span");
+        name.className = "model-name";
+        name.textContent = model;
+        pill.appendChild(name);
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "model-remove";
+        button.setAttribute("data-model", model);
+        button.setAttribute("aria-label", `${removeLabel}: ${model}`);
+        button.title = removeLabel;
+        button.textContent = "×";
+        pill.appendChild(button);
+
+        routerModelList.appendChild(pill);
+    });
+}
 
 // Record Hotkey
 if (hotkeyInput) {
@@ -398,7 +649,9 @@ function applyTranslations() {
     });
 
     if (i18n['title.settings']) document.title = i18n['title.settings'];
+    renderRouterModelList();
     syncDropdownUI("provider", document.getElementById("active-provider")?.value || settings.activeProvider || "gemini");
+    syncDropdownUI("routerModel", document.getElementById("router-model")?.value || settings.routerModel || DEFAULT_ROUTER_MODELS[0]);
     syncDropdownUI("locale", document.getElementById("select-locale")?.value || settings.locale || "en");
     updateProviderUI();
 }

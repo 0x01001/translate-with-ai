@@ -17,8 +17,8 @@
             --accent1:#9333EA;
             --accent2:#4F46E5;
         }
-        html,body{height:100%;margin:0;background:transparent;color:var(--text);font-family:Segoe UI,Roboto,system-ui,sans-serif;color-scheme:dark}
-        body{overflow:hidden}
+        html,body{min-height:100%;margin:0;background:transparent;color:var(--text);font-family:Segoe UI,Roboto,system-ui,sans-serif;color-scheme:dark}
+        body{overflow:auto}
         .app-container{box-sizing:border-box;min-height:100vh;padding:18px;background:radial-gradient(circle at top left, rgba(147,51,234,0.15), transparent 26%), radial-gradient(circle at bottom right, rgba(79,70,229,0.12), transparent 28%), linear-gradient(180deg, rgba(15,17,21,0.98), rgba(10,11,12,0.94));}
         .shell{display:flex;flex-direction:column;gap:14px;max-width:720px;margin:0 auto}
         .header{display:flex;align-items:center;gap:12px}
@@ -53,11 +53,21 @@
         .status-line{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;color:var(--muted);font-size:12px}
         .hidden-note{font-size:12px;color:var(--muted);margin:10px 0 0 182px}
 
+        .model-add-row{display:flex;gap:8px;margin-top:8px}
+        .model-add-row input{flex:1;min-width:0}
+        .btn.secondary{color:var(--text);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);box-shadow:none;white-space:nowrap}
+        .model-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+        .model-pill{display:inline-flex;align-items:center;gap:8px;max-width:100%;padding:6px 8px 6px 10px;border:1px solid rgba(255,255,255,0.08);border-radius:999px;background:rgba(255,255,255,0.04);font-size:12px;color:var(--text)}
+        .model-pill.active{border-color:rgba(147,51,234,0.45);background:rgba(147,51,234,0.14)}
+        .model-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:420px}
+        .model-remove{width:18px;height:18px;border:0;border-radius:999px;background:rgba(255,255,255,0.08);color:var(--muted);cursor:pointer;line-height:18px;padding:0;font-size:14px}
+        .model-remove:hover{background:rgba(248,113,113,0.18);color:#fecaca}
+
         .row{display:flex;align-items:center;gap:10px}
         .row input[type="checkbox"]{width:16px;height:16px;accent-color:#7c3aed}
         .row label{color:var(--text);font-size:13px}
 
-        .footer{display:flex;align-items:center;justify-content:flex-end;gap:12px}
+        .footer{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding-bottom:6px}
         .btn{border:0;border-radius:12px;padding:11px 16px;cursor:pointer;font-weight:600}
         .btn.primary{color:#fff;background:linear-gradient(90deg,var(--accent1),var(--accent2));box-shadow:0 14px 28px rgba(79,70,229,0.2)}
         .toast{font-size:13px;color:#34d399;opacity:0;transition:opacity .25s}
@@ -68,6 +78,8 @@
             .field{grid-template-columns:1fr;gap:8px}
             .hint,.hidden-note{margin-left:0}
             .section-title{flex-direction:column;align-items:flex-start;gap:4px}
+            .model-add-row{flex-direction:column}
+            .model-name{max-width:260px}
         }
     </style>
 </head>
@@ -104,6 +116,9 @@
                             <button type="button" class="dropdown-option" data-value="openai" data-label-key="provider.openai" aria-selected="false">
                                 <span data-i18n="provider.openai">OpenAI</span>
                             </button>
+                            <button type="button" class="dropdown-option" data-value="router" data-label-key="provider.router" aria-selected="false">
+                                <span data-i18n="provider.router">OpenRouter / 9router</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -131,6 +146,36 @@
                         <input type="text" id="openai-model" value="gpt-4o-mini" data-i18n-placeholder="settings.openai_model_placeholder">
                     </div>
                 </div>
+
+                <div id="router-panel" style="display:none">
+                    <div class="field">
+                        <label for="router-key" data-i18n="settings.router_key_label">OpenRouter / 9router API Key</label>
+                        <input type="password" id="router-key" placeholder="Nhập OpenRouter / 9router API key của bạn..." data-i18n-placeholder="settings.router_key_placeholder">
+                    </div>
+                    <div class="field">
+                        <label for="router-base-url" data-i18n="settings.router_base_url_label">Base URL</label>
+                        <input type="text" id="router-base-url" value="https://openrouter.ai/api/v1" data-i18n-placeholder="settings.router_base_url_placeholder">
+                    </div>
+                    <div class="field">
+                        <label data-i18n="settings.router_model_label">Model Name</label>
+                        <div>
+                            <div class="dropdown" data-dropdown="router-model">
+                                <input type="hidden" id="router-model" value="openai/gpt-4o-mini">
+                                <button type="button" class="dropdown-trigger" id="router-model-trigger" aria-haspopup="listbox" aria-expanded="false">
+                                    <span class="dropdown-value" id="router-model-text">openai/gpt-4o-mini</span>
+                                    <span class="dropdown-chevron">▾</span>
+                                </button>
+                                <div class="dropdown-menu" id="router-model-menu" role="listbox" aria-label="Router model options"></div>
+                            </div>
+                            <div class="hint" data-i18n="settings.router_model_hint" style="margin-left:0">Choose a saved model or add a custom OpenAI-compatible model id.</div>
+                            <div class="model-add-row">
+                                <input type="text" id="router-model-add" placeholder="openai/gpt-4o-mini" data-i18n-placeholder="settings.router_add_model_placeholder">
+                                <button type="button" id="router-model-add-btn" class="btn secondary" data-i18n="settings.router_add_model">Add model</button>
+                            </div>
+                            <div id="router-model-list" class="model-list" aria-live="polite"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="card">
@@ -145,6 +190,34 @@
                         <input type="text" id="hotkey-input" placeholder="Nhấn tổ hợp phím để ghi nhận..." data-i18n-placeholder="settings.hotkey_placeholder">
                         <div class="hint" data-i18n="settings.hotkey_hint" style="margin-left:0;min-height:16px">Đặt con trỏ vào ô trên và nhấn tổ hợp phím mong muốn.</div>
                         <div id="hotkey-error" class="hint" style="margin-left:0;min-height:16px"></div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="quick-translate-target-lang" data-i18n="settings.quick_translate_target_label">Quick Translate target</label>
+                    <div>
+                        <select id="quick-translate-target-lang">
+                            <option value="Tiếng Việt" selected data-i18n="lang.vi">Tiếng Việt</option>
+                            <option value="Tiếng Anh" data-i18n="lang.en">Tiếng Anh (English)</option>
+                            <option value="Tiếng Nhật" data-i18n="lang.ja">Tiếng Nhật (日本語)</option>
+                            <option value="Tiếng Trung giản thể" data-i18n="lang.zh-CN">Tiếng Trung giản thể (简体中文)</option>
+                            <option value="Tiếng Trung phồn thể" data-i18n="lang.zh-TW">Tiếng Trung phồn thể (繁體中文)</option>
+                            <option value="Tiếng Pháp" data-i18n="lang.fr">Tiếng Pháp (Français)</option>
+                            <option value="Tiếng Đức" data-i18n="lang.de">Tiếng Đức (Deutsch)</option>
+                            <option value="Tiếng Hàn" data-i18n="lang.ko">Tiếng Hàn (한국어)</option>
+                        </select>
+                        <div class="hint" data-i18n="settings.quick_translate_target_hint" style="margin-left:0">Default language used when translating selected text from the hotkey.</div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label data-i18n="settings.quick_translate_behavior_label">After quick translate</label>
+                    <div>
+                        <div class="row">
+                            <input id="quick-translate-auto-paste" type="checkbox" checked>
+                            <label for="quick-translate-auto-paste" data-i18n="settings.quick_translate_auto_paste">Automatically paste translated text over the selection</label>
+                        </div>
+                        <div class="hint" data-i18n="settings.quick_translate_auto_paste_hint" style="margin-left:0">Turn off to show the popup result first instead of replacing text automatically.</div>
                     </div>
                 </div>
 

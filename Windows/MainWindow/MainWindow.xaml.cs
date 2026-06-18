@@ -25,9 +25,9 @@ namespace ReWrite
         private SettingsWindow? _settingsWindow;
         private IntPtr _mainHwnd = IntPtr.Zero;
 
-        private uint _hotkeyModifiers = HotKeyManager.MOD_CONTROL | HotKeyManager.MOD_SHIFT;
-        private uint _hotkeyVk = 0x41; // A
-        private string _hotkeyText = "Ctrl+Shift+A";
+        private uint _hotkeyModifiers = HotKeyManager.MOD_ALT;
+        private uint _hotkeyVk = 0x58; // X
+        private string _hotkeyText = "Alt+X";
 
         public MainWindow()
         {
@@ -226,8 +226,10 @@ namespace ReWrite
                 catch { }
             }
 
-            // 3. Open the floating popup and feed it the captured text
-            ShowPopup(selectedText, activeWindowHwnd);
+            // 3. Start quick translation. The popup WebView handles provider calls in the background.
+            if (_popupWindow == null)
+                _popupWindow = new PopupWindow(this);
+            _popupWindow.BeginQuickTranslate(selectedText, activeWindowHwnd);
         }
 
         // ── Popup positioning ─────────────────────────────────────────────────────

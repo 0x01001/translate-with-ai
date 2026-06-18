@@ -9,8 +9,8 @@
   "welcome.loading": "Đang khởi động ứng dụng...",
   "welcome.ready": "Đã sẵn sàng. Bạn có thể đóng cửa sổ này.",
   "button.close": "Đóng",
-  "button.view_tutorial": "Xem hướng dẫn"
-  ,"label.model": "Sử dụng AI",
+  "button.view_tutorial": "Xem hướng dẫn",
+  "label.model": "Sử dụng AI",
   "tab.rewrite": "Viết lại",
   "tab.write": "Soạn thảo",
   "tab.translate": "Dịch thuật",
@@ -30,7 +30,7 @@
   "settings.save_notice": "Đã lưu cài đặt thành công!",
   "button.save_settings": "Lưu cấu hình",
   "settings.hotkey_label": "Phím tắt",
-  "settings.hotkey_hint": "Đặt con trỏ vào ô trên và nhấn tổ hợp phím mong muốn (Ví dụ: Ctrl + Alt + K)",
+  "settings.hotkey_hint": "Đặt con trỏ vào ô trên và nhấn tổ hợp phím mong muốn (mặc định: Alt+X).",
   "settings.provider_label": "Nhà cung cấp chính",
   "settings.autostart": "Khởi động cùng Windows",
   "hotkey.invalid": "Phím tắt không hợp lệ.",
@@ -39,72 +39,92 @@
   "tutorial.no_video": "Chưa gắn video",
   "tutorial.hint": "Bạn có thể gắn link YouTube embed qua query ?video=... hoặc localStorage.",
   "tutorial.start": "Bắt đầu dùng ReWrite",
-  "button.skip": "Để sau"
-  ,"tray.tooltip": "ReWrite - Đang hoạt động",
+  "button.skip": "Để sau",
+  "tray.tooltip": "ReWrite - Đang hoạt động",
   "tray.open_settings": "Cấu hình",
   "tray.autostart": "Khởi động cùng Windows",
-  "tray.exit": "Thoát"
-  ,"popup.selected_label":"Văn bản đã chọn:",
-  "popup.history_empty":"Chưa có bản lưu nào để hiển thị.",
-  "popup.clear_history":"Xóa sạch",
-  "popup.result_preparing":"Đang chuẩn bị...",
-  "popup.copy":"Sao chép",
-  "popup.error.no_selection":"Lỗi: Không tìm thấy văn bản đã chọn. Vui lòng đóng cửa sổ này, bôi đen văn bản để viết lại và nhấn phím tắt.",
-  "popup.error.prompt_required":"Lỗi: Vui lòng nhập nội dung gợi ý (Prompt) hoặc chủ đề bạn muốn soạn thảo.",
-  "popup.error.no_text_for_translate":"Lỗi: Không tìm thấy văn bản cần dịch. Vui lòng đóng cửa sổ, bôi đen văn bản cần dịch bên ngoài, rồi nhấn phím tắt.",
-  "popup.error.api_connection":"Lỗi kết nối API: {0}<br>Vui lòng mở Cài đặt (từ khay hệ thống) để cấu hình API Key chính xác.",
-  "popup.error.gemini_key_missing":"Chưa cấu hình Gemini API Key. Hãy cấu hình trong Cài đặt.",
-  "popup.error.openai_key_missing":"Chưa cấu hình OpenAI API Key. Hãy cấu hình trong Cài đặt.",
-  "settings.gemini_key_label":"API Key"
-  ,"settings.gemini_key_placeholder":"Nhập Gemini API key của bạn..."
-  ,"settings.gemini_model_label":"Model Name"
-  ,"settings.gemini_model_placeholder":"Ví dụ: gemini-1.5-flash"
-  ,"settings.openai_key_label":"API Key"
-  ,"settings.openai_key_placeholder":"Nhập OpenAI API key của bạn..."
-  ,"settings.openai_model_label":"Model Name"
-  ,"settings.openai_model_placeholder":"Ví dụ: gpt-4o-mini"
-  ,"settings.hotkey_placeholder":"Đặt con trỏ vào ô trên và nhấn tổ hợp phím mong muốn (Ví dụ: Ctrl + Alt + K)"
-  ,"button.advanced_toggle":"Tùy chọn nâng cao"
-  ,"label.tone":"Tone giọng"
-  ,"label.format":"Định dạng"
-  ,"label.length":"Độ dài"
-  ,"label.rewrite_prompt":"Yêu cầu bổ sung"
-  ,"placeholder.rewrite_example":"Ví dụ: Giữ nguyên văn phong và định dạng..."
-  ,"label.write_topic":"Chủ đề / Gợi ý"
-  ,"placeholder.write_topic":"Nhập chủ đề hoặc hướng dẫn tại đây..."
-  ,"option.default":"Mặc định"
-  ,"tone.professional":"Chuyên nghiệp"
-  ,"tone.casual":"Thoải mái"
-  ,"tone.academic":"Học thuật"
-  ,"tone.creative":"Sáng tạo"
-  ,"tone.humorous":"Hài hước"
-  ,"tone.direct":"Trực tiếp"
-  ,"format.paragraph":"Đoạn văn"
-  ,"format.bullets":"Danh sách gạch đầu dòng"
-  ,"format.email":"Email"
-  ,"format.short":"Tin nhắn ngắn"
-  ,"format.essay":"Bài viết dài"
-  ,"length.short":"Ngắn"
-  ,"length.medium":"Vừa phải"
-  ,"length.long":"Dài hơn"
-  ,"lang.vi":"Tiếng Việt"
-  ,"lang.en":"Tiếng Anh (English)"
-  ,"lang.ja":"Tiếng Nhật (日本語)"
-  ,"lang.zh-CN":"Tiếng Trung Giản thể (简体中文)"
-  ,"lang.zh-TW":"Tiếng Trung Phồn thể (繁體中文)"
-  ,"lang.fr":"Tiếng Pháp (Français)"
-  ,"lang.de":"Tiếng Đức (Deutsch)"
-  ,"lang.ko":"Tiếng Hàn (한국어)"
-  ,"popup.history_title":"Lịch sử tạm thời"
-  ,"popup.result_title":"Kết quả từ AI"
-  ,"button.show_result":"Kết quả"
-  ,"button.show_diff":"So sánh (Diff)"
-  ,"button.retry":"Thử lại"
-  ,"button.replace":"Thay thế kết quả"
-  ,"button.generate":"Bắt đầu thực hiện"
-  ,"label.translate_source":"Văn bản cần dịch"
-  ,"label.translate_to":"Dịch sang ngôn ngữ"
-  ,"settings.language":"Ngôn ngữ"
-  ,"provider.gemini":"Gemini (Google)"
-  ,"provider.openai":"OpenAI"
+  "tray.exit": "Thoát",
+  "popup.selected_label": "Văn bản đã chọn:",
+  "popup.history_empty": "Chưa có bản lưu nào để hiển thị.",
+  "popup.clear_history": "Xóa sạch",
+  "popup.result_preparing": "Đang chuẩn bị...",
+  "popup.copy": "Sao chép",
+  "popup.error.no_selection": "Lỗi: Không tìm thấy văn bản đã chọn. Vui lòng đóng cửa sổ này, bôi đen văn bản để viết lại và nhấn phím tắt.",
+  "popup.error.prompt_required": "Lỗi: Vui lòng nhập nội dung gợi ý (Prompt) hoặc chủ đề bạn muốn soạn thảo.",
+  "popup.error.no_text_for_translate": "Lỗi: Không tìm thấy văn bản cần dịch. Vui lòng đóng cửa sổ, bôi đen văn bản cần dịch bên ngoài, rồi nhấn phím tắt.",
+  "popup.error.api_connection": "Lỗi kết nối API: {0}<br>Vui lòng mở Cài đặt (từ khay hệ thống) để cấu hình API Key chính xác.",
+  "popup.error.gemini_key_missing": "Chưa cấu hình Gemini API Key. Hãy cấu hình trong Cài đặt.",
+  "popup.error.openai_key_missing": "Chưa cấu hình OpenAI API Key. Hãy cấu hình trong Cài đặt.",
+  "settings.gemini_key_label": "API Key",
+  "settings.gemini_key_placeholder": "Nhập Gemini API key của bạn...",
+  "settings.gemini_model_label": "Model Name",
+  "settings.gemini_model_placeholder": "Ví dụ: gemini-1.5-flash",
+  "settings.openai_key_label": "API Key",
+  "settings.openai_key_placeholder": "Nhập OpenAI API key của bạn...",
+  "settings.openai_model_label": "Model Name",
+  "settings.openai_model_placeholder": "Ví dụ: gpt-4o-mini",
+  "settings.hotkey_placeholder": "Đặt con trỏ vào ô trên và nhấn tổ hợp phím (mặc định: Alt+X)",
+  "button.advanced_toggle": "Tùy chọn nâng cao",
+  "label.tone": "Tone giọng",
+  "label.format": "Định dạng",
+  "label.length": "Độ dài",
+  "label.rewrite_prompt": "Yêu cầu bổ sung",
+  "placeholder.rewrite_example": "Ví dụ: Giữ nguyên văn phong và định dạng...",
+  "label.write_topic": "Chủ đề / Gợi ý",
+  "placeholder.write_topic": "Nhập chủ đề hoặc hướng dẫn tại đây...",
+  "option.default": "Mặc định",
+  "tone.professional": "Chuyên nghiệp",
+  "tone.casual": "Thoải mái",
+  "tone.academic": "Học thuật",
+  "tone.creative": "Sáng tạo",
+  "tone.humorous": "Hài hước",
+  "tone.direct": "Trực tiếp",
+  "format.paragraph": "Đoạn văn",
+  "format.bullets": "Danh sách gạch đầu dòng",
+  "format.email": "Email",
+  "format.short": "Tin nhắn ngắn",
+  "format.essay": "Bài viết dài",
+  "length.short": "Ngắn",
+  "length.medium": "Vừa phải",
+  "length.long": "Dài hơn",
+  "lang.vi": "Tiếng Việt",
+  "lang.en": "Tiếng Anh (English)",
+  "lang.ja": "Tiếng Nhật (日本語)",
+  "lang.zh-CN": "Tiếng Trung Giản thể (简体中文)",
+  "lang.zh-TW": "Tiếng Trung Phồn thể (繁體中文)",
+  "lang.fr": "Tiếng Pháp (Français)",
+  "lang.de": "Tiếng Đức (Deutsch)",
+  "lang.ko": "Tiếng Hàn (한국어)",
+  "popup.history_title": "Lịch sử tạm thời",
+  "popup.result_title": "Kết quả từ AI",
+  "button.show_result": "Kết quả",
+  "button.show_diff": "So sánh (Diff)",
+  "button.retry": "Thử lại",
+  "button.replace": "Thay thế kết quả",
+  "button.generate": "Bắt đầu thực hiện",
+  "label.translate_source": "Văn bản cần dịch",
+  "label.translate_to": "Dịch sang ngôn ngữ",
+  "settings.language": "Ngôn ngữ",
+  "provider.gemini": "Gemini (Google)",
+  "provider.openai": "OpenAI",
+  "provider.router": "OpenRouter / 9router",
+  "settings.router_key_label": "API Key",
+  "settings.router_key_placeholder": "Nhập OpenRouter / 9router API key của bạn...",
+  "settings.router_base_url_label": "Base URL",
+  "settings.router_base_url_placeholder": "Ví dụ: https://openrouter.ai/api/v1",
+  "settings.router_model_label": "Model Name",
+  "settings.router_model_hint": "Chọn model đã lưu hoặc thêm model id OpenAI-compatible tùy chỉnh.",
+  "settings.router_add_model_placeholder": "Ví dụ: anthropic/claude-3.5-sonnet",
+  "settings.router_add_model": "Thêm model",
+  "settings.router_remove_model": "Xóa model",
+  "popup.error.router_key_missing": "Chưa cấu hình OpenRouter / 9router API Key. Hãy cấu hình trong Cài đặt.",
+  "settings.quick_translate_target_label": "Ngôn ngữ dịch nhanh",
+  "settings.quick_translate_target_hint": "Ngôn ngữ mặc định khi dịch văn bản đã bôi đen bằng phím tắt.",
+  "settings.quick_translate_behavior_label": "Sau khi dịch nhanh",
+  "settings.quick_translate_auto_paste": "Tự động dán bản dịch thay thế đoạn đã bôi đen",
+  "settings.quick_translate_auto_paste_hint": "Tắt tùy chọn này nếu muốn xem kết quả trong popup trước khi thay thế.",
+  "quick_translate.loading": "Đang dịch...",
+  "quick_translate.error.no_selection": "Không tìm thấy văn bản đã bôi đen. Hãy chọn văn bản và nhấn phím tắt lại.",
+  "quick_translate.error.failed": "Dịch thất bại. Vui lòng kiểm tra cấu hình provider và thử lại.",
+  "quick_translate.error.empty_result": "Kết quả dịch trống. Không có nội dung nào được dán."
 }

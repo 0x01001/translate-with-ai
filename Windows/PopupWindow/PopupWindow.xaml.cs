@@ -22,6 +22,10 @@ namespace ReWrite
         private bool _pendingSettings = false;
         private string _lastShowText = "";
         private bool _lastShowSettings = false;
+        private QuickTranslateStatusWindow? _quickStatusWindow;
+        private bool _hasPendingQuickTranslate = false;
+        private string _pendingQuickTranslateText = "";
+        private IntPtr _pendingQuickTranslateTargetHwnd = IntPtr.Zero;
 
         public PopupWindow(MainWindow parent)
         {
@@ -158,6 +162,15 @@ namespace ReWrite
                         _pendingSettings = false;
                     }
 
+                    if (_hasPendingQuickTranslate)
+                    {
+                        _targetHwnd = _pendingQuickTranslateTargetHwnd;
+                        PushQuickTranslateMessage(_pendingQuickTranslateText);
+                        _hasPendingQuickTranslate = false;
+                        _pendingQuickTranslateText = "";
+                        _pendingQuickTranslateTargetHwnd = IntPtr.Zero;
+                    }
+
                     _ = ResendLastShowMessageAsync();
                     return;
                 }
@@ -177,6 +190,21 @@ namespace ReWrite
                 {
                     string text = doc.RootElement.GetProperty("text").GetString() ?? "";
                     PasteAndHide(text);
+                }
+                else if (action == "quick_translate_result")
+                {
+                    string text = doc.RootElement.GetProperty("text").GetString() ?? "";
+                    _ = CompleteQuickTranslateAsync(text);
+                }
+                else if (action == "quick_translate_error")
+                {
+                    string message = doc.RootElement.TryGetProperty("message", out var prop) ? prop.GetString() ?? "" : "";
+                    ShowQuickTranslateError(string.IsNullOrWhiteSpace(message) ? Localization.Get("quick_translate.error.failed") : message);
+                }
+                else if (action == "quick_translate_show_popup")
+                {
+                    HideQuickTranslateStatus();
+                    ShowPreparedQuickTranslatePopup();
                 }
                 else if (action == "start_drag")
                 {
@@ -204,6 +232,32 @@ namespace ReWrite
 
         // ── Messages to front-end ─────────────────────────────────────────────────
 
+        public void BeginQuickTranslate(string selectedText, IntPtr targetHwnd)
+        {
+            _targetHwnd = targetHwnd;
+            PositionNearCursor();
+
+            string text = (selectedText ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                ShowQuickTranslateError(Localization.Get("quick_translate.error.no_selection"));
+                return;
+            }
+
+            ShowQuickTranslateStatus(Localization.Get("quick_translate.loading"));
+
+            if (_uiReady)
+            {
+                PushQuickTranslateMessage(text);
+            }
+            else
+            {
+                _hasPendingQuickTranslate = true;
+                _pendingQuickTranslateText = text;
+                _pendingQuickTranslateTargetHwnd = targetHwnd;
+            }
+        }
+
         private void PushShowMessage(string selectedText, bool openSettingsDirectly)
         {
             try
@@ -226,6 +280,24 @@ namespace ReWrite
             }
         }
 
+        private void PushQuickTranslateMessage(string selectedText)
+        {
+            try
+            {
+                var payload = new
+                {
+                    @event = "quick_translate",
+                    text = selectedText
+                };
+                webView.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(payload));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error pushing quick translate message: {ex.Message}");
+                ShowQuickTranslateError(Localization.Get("quick_translate.error.failed"));
+            }
+        }
+
         private async Task ResendLastShowMessageAsync()
         {
             await Task.Delay(120);
@@ -244,54 +316,123 @@ namespace ReWrite
         private async void PasteAndHide(string text)
         {
             this.Hide(); // Hide immediately for snappy UX
+            await PasteTextToTargetAsync(text);
+        }
 
-            if (_targetHwnd != IntPtr.Zero)
+        private async Task CompleteQuickTranslateAsync(string text)
+        {
+            try
             {
-                await Task.Run(async () =>
+                if (string.IsNullOrWhiteSpace(text))
                 {
-                    NativeMethods.SetForegroundWindow(_targetHwnd);
-                    await Task.Delay(80); // Wait for focus to settle
+                    ShowQuickTranslateError(Localization.Get("quick_translate.error.empty_result"));
+                    return;
+                }
 
-                    // Save current clipboard
-                    string? originalClipboard = null;
-                    bool hadText = false;
-                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        try
-                        {
-                            if (System.Windows.Clipboard.ContainsText())
-                            {
-                                originalClipboard = System.Windows.Clipboard.GetText();
-                                hadText = true;
-                            }
-                        }
-                        catch { }
-                    });
-
-                    // Set new clipboard and paste
-                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        try { System.Windows.Clipboard.SetText(text); }
-                        catch { }
-                    });
-
-                    await KeyboardSimulator.SimulatePasteAsync();
-                    await Task.Delay(150); // Wait for paste action to complete
-
-                    // Restore user's original clipboard
-                    if (hadText && originalClipboard != null)
-                    {
-                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            try { System.Windows.Clipboard.SetText(originalClipboard); }
-                            catch { }
-                        });
-                    }
-                });
+                await PasteTextToTargetAsync(text);
+                HideQuickTranslateStatus();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Quick translate paste failed: {ex.Message}");
+                ShowQuickTranslateError(Localization.Get("quick_translate.error.failed"));
             }
         }
 
+        private async Task PasteTextToTargetAsync(string text)
+        {
+            if (_targetHwnd == IntPtr.Zero) return;
+
+            await Task.Run(async () =>
+            {
+                NativeMethods.SetForegroundWindow(_targetHwnd);
+                await Task.Delay(80); // Wait for focus to settle
+
+                // Save current clipboard
+                string? originalClipboard = null;
+                bool hadText = false;
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    try
+                    {
+                        if (System.Windows.Clipboard.ContainsText())
+                        {
+                            originalClipboard = System.Windows.Clipboard.GetText();
+                            hadText = true;
+                        }
+                    }
+                    catch { }
+                });
+
+                // Set new clipboard and paste
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    try { System.Windows.Clipboard.SetText(text); }
+                    catch { }
+                });
+
+                await KeyboardSimulator.SimulatePasteAsync();
+                await Task.Delay(150); // Wait for paste action to complete
+
+                // Restore user's original clipboard
+                if (hadText && originalClipboard != null)
+                {
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        try { System.Windows.Clipboard.SetText(originalClipboard); }
+                        catch { }
+                    });
+                }
+            });
+        }
+
+        private void ShowPreparedQuickTranslatePopup()
+        {
+            Show();
+            WindowState = WindowState.Normal;
+            Activate();
+            Focus();
+        }
+
+        private void ShowQuickTranslateStatus(string message)
+        {
+            _quickStatusWindow ??= new QuickTranslateStatusWindow();
+            _quickStatusWindow.ShowNearCursor(message);
+        }
+
+        private void HideQuickTranslateStatus()
+        {
+            try { _quickStatusWindow?.Hide(); } catch { }
+        }
+
+        private void ShowQuickTranslateError(string message)
+        {
+            _quickStatusWindow ??= new QuickTranslateStatusWindow();
+            _quickStatusWindow.ShowErrorThenHide(message);
+        }
+
         // ── Layout helpers ────────────────────────────────────────────────────────
+
+        private void PositionNearCursor()
+        {
+            NativeMethods.GetCursorPos(out NativeMethods.POINT mousePos);
+
+            double screenWidth  = SystemParameters.PrimaryScreenWidth;
+            double screenHeight = SystemParameters.PrimaryScreenHeight;
+            double popupWidth   = Width > 0 ? Width : 460;
+            double popupHeight  = Height > 0 ? Height : 360;
+
+            double left = mousePos.X - (popupWidth / 2);
+            double top  = mousePos.Y + 15;
+
+            if (left < 10) left = 10;
+            if (left + popupWidth > screenWidth) left = screenWidth - popupWidth - 10;
+            if (top + popupHeight > screenHeight) top = mousePos.Y - popupHeight - 15;
+            if (top < 10) top = 10;
+
+            Left = left;
+            Top = top;
+        }
 
         private void ClampToScreen()
         {
@@ -356,6 +497,7 @@ namespace ReWrite
         protected override void OnClosed(EventArgs e)
         {
             Localization.LocaleChanged -= OnLocaleChanged;
+            try { _quickStatusWindow?.Close(); } catch { }
             base.OnClosed(e);
         }
     }

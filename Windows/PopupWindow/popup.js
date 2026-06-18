@@ -10,12 +10,29 @@ let lastRequestMeta = null;
 let i18n = {};
 
 // Settings default structure (will load from localStorage)
+const DEFAULT_ROUTER_BASE_URL = "https://openrouter.ai/api/v1";
+const DEFAULT_ROUTER_MODELS = [
+    "openai/gpt-4o-mini",
+    "openai/gpt-4o",
+    "anthropic/claude-3.5-sonnet",
+    "anthropic/claude-3.5-haiku",
+    "google/gemini-flash-1.5"
+];
+const SUPPORTED_PROVIDERS = ["gemini", "openai", "router"];
+const DEFAULT_QUICK_TRANSLATE_TARGET_LANG = "Tiếng Việt";
+
 let settings = {
     geminiKey: "",
     geminiModel: "gemini-3.1-flash-lite",
     openaiKey: "",
     openaiModel: "gpt-4o-mini",
-    activeProvider: "gemini"
+    routerKey: "",
+    routerBaseUrl: DEFAULT_ROUTER_BASE_URL,
+    routerModel: DEFAULT_ROUTER_MODELS[0],
+    routerModels: [...DEFAULT_ROUTER_MODELS],
+    activeProvider: "gemini",
+    quickTranslateAutoPaste: true,
+    quickTranslateTargetLang: DEFAULT_QUICK_TRANSLATE_TARGET_LANG
 };
 
 // DOM Elements
@@ -62,13 +79,49 @@ function escapeHtml(text) {
         .replace(/>/g, "&gt;");
 }
 
+function normalizeRouterModels(models, selectedModel) {
+    const source = Array.isArray(models) && models.length > 0 ? models : DEFAULT_ROUTER_MODELS;
+    const normalized = [];
+
+    source.forEach(model => {
+        const value = String(model || "").trim();
+        if (value && !normalized.includes(value)) normalized.push(value);
+    });
+
+    const selected = String(selectedModel || "").trim();
+    if (selected && !normalized.includes(selected)) normalized.unshift(selected);
+
+    return normalized.length > 0 ? normalized : [DEFAULT_ROUTER_MODELS[0]];
+}
+
+function normalizeSettings() {
+    settings.routerBaseUrl = String(settings.routerBaseUrl || DEFAULT_ROUTER_BASE_URL).trim() || DEFAULT_ROUTER_BASE_URL;
+    settings.routerModel = String(settings.routerModel || DEFAULT_ROUTER_MODELS[0]).trim() || DEFAULT_ROUTER_MODELS[0];
+    settings.routerModels = normalizeRouterModels(settings.routerModels, settings.routerModel);
+
+    if (!settings.routerModels.includes(settings.routerModel)) {
+        settings.routerModel = settings.routerModels[0];
+    }
+
+    if (!SUPPORTED_PROVIDERS.includes(settings.activeProvider)) {
+        settings.activeProvider = "gemini";
+    }
+
+    settings.quickTranslateAutoPaste = settings.quickTranslateAutoPaste !== false;
+    settings.quickTranslateTargetLang = String(settings.quickTranslateTargetLang || DEFAULT_QUICK_TRANSLATE_TARGET_LANG).trim() || DEFAULT_QUICK_TRANSLATE_TARGET_LANG;
+}
+
+function getCurrentModel() {
+    if (settings.activeProvider === "gemini") return settings.geminiModel;
+    if (settings.activeProvider === "router") return settings.routerModel;
+    return settings.openaiModel;
+}
+
 function getModelLabel() {
-    const model = settings.activeProvider === "gemini"
-        ? settings.geminiModel
-        : settings.openaiModel;
+    const model = getCurrentModel() || "AI";
 
     return model
-        .replace(/-/g, " ")
+        .replace(/[\/-]/g, " ")
         .split(" ")
         .filter(Boolean)
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -220,7 +273,28 @@ function refreshAppSettings() {
             console.error("Failed to parse settings", e);
         }
     }
+    normalizeSettings();
+    syncQuickTranslateTargetSelect();
     updateModelLabel();
+}
+
+function getQuickTranslateTargetLang() {
+    return settings.quickTranslateTargetLang || DEFAULT_QUICK_TRANSLATE_TARGET_LANG;
+}
+
+function syncQuickTranslateTargetSelect(targetLang = getQuickTranslateTargetLang()) {
+    const select = document.getElementById("param-lang");
+    if (!select) return;
+
+    const value = String(targetLang || DEFAULT_QUICK_TRANSLATE_TARGET_LANG).trim() || DEFAULT_QUICK_TRANSLATE_TARGET_LANG;
+    const hasOption = Array.from(select.options).some(option => option.value === value);
+    if (!hasOption) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+    }
+    select.value = value;
 }
 
 function renderPrompt(template, values) {
@@ -232,6 +306,31 @@ function normalizePromptSpacing(prompt) {
         .replace(/[ \t]+\n/g, "\n")
         .replace(/\n{3,}/g, "\n\n")
         .trim();
+}
+
+function buildTranslatePrompt(text, targetLang) {
+    return normalizePromptSpacing(renderPrompt(promptTemplates.translate, {
+        targetLang: targetLang || getQuickTranslateTargetLang(),
+        selectedText: text
+    }));
+}
+
+async function runProviderStream(prompt) {
+    aiResult = "";
+    if (settings.activeProvider === "gemini") {
+        await streamGemini(prompt);
+    } else if (settings.activeProvider === "router") {
+        await streamRouter(prompt);
+    } else {
+        await streamOpenAI(prompt);
+    }
+    return aiResult.trim();
+}
+
+function postToHost(message) {
+    if (window.chrome && window.chrome.webview) {
+        window.chrome.webview.postMessage(message);
+    }
 }
 
 // Tab Switching
@@ -309,6 +408,11 @@ if (window.chrome && window.chrome.webview) {
             return;
         }
 
+        if (data.event === "quick_translate") {
+            handleQuickTranslate(data);
+            return;
+        }
+
         if (data.event === "show") {
             selectedText = data.text ? data.text.trim() : "";
 
@@ -327,7 +431,11 @@ if (window.chrome && window.chrome.webview) {
                 sourcePreview.classList.remove("text-gray-500");
                 translateSourcePreview.textContent = selectedText;
                 translateSourcePreview.classList.remove("text-gray-500");
-                switchTab("rewrite");
+                if (data.targetLang) syncQuickTranslateTargetSelect(data.targetLang);
+                switchTab(data.mode === "translate" ? "translate" : "rewrite");
+                if (data.autoStart) {
+                    setTimeout(() => startAIProcess(), 80);
+                }
             } else {
                 const noSelection = i18n['popup.no_selection'] || "Chưa chọn văn bản nào... Hãy bôi đen văn bản ngoài màn hình và nhấn phím tắt.";
                 sourcePreview.textContent = noSelection;
@@ -344,6 +452,65 @@ if (window.chrome && window.chrome.webview) {
             requestPopupResize();
         }
     });
+}
+
+async function handleQuickTranslate(data) {
+    refreshAppSettings();
+    selectedText = data.text ? data.text.trim() : "";
+    const targetLang = data.targetLang || getQuickTranslateTargetLang();
+    syncQuickTranslateTargetSelect(targetLang);
+
+    aiResult = "";
+    diffOutput.innerHTML = "";
+    btnShowDiff.classList.add("hidden");
+    switchResultTab("normal");
+
+    if (!selectedText) {
+        postToHost({
+            action: "quick_translate_error",
+            message: i18n['quick_translate.error.no_selection'] || i18n['popup.error.no_text_for_translate'] || "No selected text found."
+        });
+        return;
+    }
+
+    sourcePreview.textContent = selectedText;
+    sourcePreview.classList.remove("text-gray-500");
+    translateSourcePreview.textContent = selectedText;
+    translateSourcePreview.classList.remove("text-gray-500");
+
+    if (settings.quickTranslateAutoPaste === false) {
+        postToHost({ action: "quick_translate_show_popup" });
+        await switchTab("translate");
+        resultContainer.style.display = "none";
+        triggerSection.style.display = "block";
+        requestPopupResize();
+        setTimeout(() => startAIProcess(), 120);
+        return;
+    }
+
+    try {
+        lastRequestMeta = {
+            tab: "translate",
+            tone: "",
+            format: "",
+            length: "",
+            prompt: "",
+            targetLang,
+            sourceText: selectedText
+        };
+        const prompt = buildTranslatePrompt(selectedText, targetLang);
+        const translatedText = await runProviderStream(prompt);
+        if (!translatedText) {
+            throw new Error(i18n['quick_translate.error.empty_result'] || "The translation result was empty.");
+        }
+        addHistoryItem();
+        postToHost({ action: "quick_translate_result", text: translatedText });
+    } catch (error) {
+        postToHost({
+            action: "quick_translate_error",
+            message: error && error.message ? error.message : (i18n['quick_translate.error.failed'] || "Translation failed.")
+        });
+    }
 }
 
 // Allow dragging the window from any non-interactive empty space
@@ -398,7 +565,7 @@ async function startAIProcess() {
         const format = document.getElementById(`${activeTab}-param-format`)?.value || "";
         const length = document.getElementById(`${activeTab}-param-length`)?.value || "";
         const customPrompt = document.getElementById(`${activeTab}-prompt-input`)?.value.trim() || "";
-        const targetLang = document.getElementById("param-lang")?.value || "Tiếng Việt";
+        const targetLang = document.getElementById("param-lang")?.value || getQuickTranslateTargetLang();
 
         lastRequestMeta = {
             tab: activeTab,
@@ -448,18 +615,10 @@ async function startAIProcess() {
                 return;
             }
 
-            prompt = normalizePromptSpacing(renderPrompt(promptTemplates.translate, {
-                targetLang,
-                selectedText
-            }));
+            prompt = buildTranslatePrompt(selectedText, targetLang);
         }
         console.log("Generated Prompt:", prompt);
-        aiResult = "";
-        if (settings.activeProvider === "gemini") {
-            await streamGemini(prompt);
-        } else {
-            await streamOpenAI(prompt);
-        }
+        await runProviderStream(prompt);
 
         if (selectedText && (activeTab === "rewrite" || activeTab === "translate")) {
             btnShowDiff.classList.remove("hidden");
@@ -493,7 +652,7 @@ async function loadLocale(locale) {
         i18n = await res.json();
         i18n['_locale_code'] = locale === 'vi' ? 'vi-VN' : (locale === 'en' ? 'en-US' : locale);
         applyTranslations();
-        document.querySelectorAll("select").forEach(select => syncCustomSelect(select));
+        document.querySelectorAll("select").forEach(select => { if (typeof syncCustomSelect === "function") syncCustomSelect(select); });
     } catch (e) {
         console.warn('Locale load failed', e);
     }
@@ -520,8 +679,11 @@ function applyTranslations() {
         if (src) src.textContent = i18n['popup.no_selection'] || src.textContent;
     }
     if (aiOutput) aiOutput.innerHTML = i18n['popup.waiting'] || aiOutput.innerHTML;
+    syncQuickTranslateTargetSelect();
     updateModelLabel();
-    document.querySelectorAll("select").forEach(select => syncCustomSelect(select));
+    document.querySelectorAll("select").forEach(select => {
+        if (typeof syncCustomSelect === "function") syncCustomSelect(select);
+    });
     requestPopupResize();
 }
 // update document title if provided
@@ -641,22 +803,52 @@ function findJsonEnd(str) {
     return -1;
 }
 
-// OpenAI API Streaming Implementation
+// OpenAI-compatible API Streaming Implementation
 async function streamOpenAI(prompt) {
     if (!settings.openaiKey) {
         throw new Error(i18n['popup.error.openai_key_missing'] || "Chưa cấu hình OpenAI API Key. Hãy cấu hình thông qua cửa sổ Cài đặt của ứng dụng.");
     }
 
-    const url = "https://api.openai.com/v1/chat/completions";
+    await streamOpenAICompatible(prompt, {
+        apiKey: settings.openaiKey,
+        model: settings.openaiModel,
+        baseUrl: "https://api.openai.com/v1"
+    });
+}
 
-    const response = await fetch(url, {
+async function streamRouter(prompt) {
+    if (!settings.routerKey) {
+        throw new Error(i18n['popup.error.router_key_missing'] || "Chưa cấu hình OpenRouter / 9router API Key. Hãy cấu hình trong Cài đặt.");
+    }
+
+    await streamOpenAICompatible(prompt, {
+        apiKey: settings.routerKey,
+        model: settings.routerModel,
+        baseUrl: settings.routerBaseUrl || DEFAULT_ROUTER_BASE_URL,
+        extraHeaders: {
+            "HTTP-Referer": "https://rewrite.local",
+            "X-Title": "ReWrite"
+        }
+    });
+}
+
+function buildChatCompletionsUrl(baseUrl) {
+    const cleanBaseUrl = String(baseUrl || "").trim().replace(/\/+$/, "");
+    if (!cleanBaseUrl) return "https://api.openai.com/v1/chat/completions";
+    if (cleanBaseUrl.endsWith("/chat/completions")) return cleanBaseUrl;
+    return `${cleanBaseUrl}/chat/completions`;
+}
+
+async function streamOpenAICompatible(prompt, { apiKey, model, baseUrl, extraHeaders = {} }) {
+    const response = await fetch(buildChatCompletionsUrl(baseUrl), {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${settings.openaiKey}`
+            "Authorization": `Bearer ${apiKey}`,
+            ...extraHeaders
         },
         body: JSON.stringify({
-            model: settings.openaiModel,
+            model,
             messages: [
                 { role: "system", content: "You are a professional writing assistant. You MUST always write in the same language as the user's input text. Never translate or switch to another language unless explicitly asked to translate." },
                 { role: "user", content: prompt }
@@ -698,7 +890,7 @@ async function streamOpenAI(prompt) {
                         renderStreamingText(aiResult);
                     }
                 } catch (e) {
-                    console.error("Error parsing OpenAI stream chunk", e);
+                    console.error("Error parsing OpenAI-compatible stream chunk", e);
                 }
             }
         }
