@@ -112,7 +112,16 @@ jobs:
             -p:FileVersion=$fileVersion `
             -p:InformationalVersion=$informationalVersion
 
-          Rename-Item -Path "release/ReWrite.exe" -NewName "ReWrite-Portable-v$releaseVersion.exe"
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
+          $publishedExe = "release/ReWrite.exe"
+          if (-not (Test-Path $publishedExe)) {
+            Write-Error "Expected published executable not found: $publishedExe"
+          }
+
+          Rename-Item -Path $publishedExe -NewName "ReWrite-Portable-v$releaseVersion.exe"
 
       - name: Build Windows installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2

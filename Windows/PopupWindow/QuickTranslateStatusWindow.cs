@@ -2,8 +2,9 @@ using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using System.Windows.Media.Effects;
+using WpfControls = System.Windows.Controls;
+using WpfMedia = System.Windows.Media;
 
 namespace ReWrite
 {
@@ -17,7 +18,7 @@ namespace ReWrite
             WindowStyle = WindowStyle.None;
             ResizeMode = ResizeMode.NoResize;
             AllowsTransparency = true;
-            Background = Brushes.Transparent;
+            Background = WpfMedia.Brushes.Transparent;
             ShowInTaskbar = false;
             ShowActivated = false;
             Topmost = true;
@@ -29,24 +30,24 @@ namespace ReWrite
             {
                 CornerRadius = new CornerRadius(14),
                 Padding = new Thickness(14, 10, 14, 10),
-                BorderBrush = new SolidColorBrush(Color.FromArgb(38, 255, 255, 255)),
+                BorderBrush = new WpfMedia.SolidColorBrush(WpfMedia.Color.FromArgb(38, 255, 255, 255)),
                 BorderThickness = new Thickness(1),
-                Background = new LinearGradientBrush(
-                    Color.FromArgb(245, 17, 21, 26),
-                    Color.FromArgb(245, 10, 12, 16),
+                Background = new WpfMedia.LinearGradientBrush(
+                    WpfMedia.Color.FromArgb(245, 17, 21, 26),
+                    WpfMedia.Color.FromArgb(245, 10, 12, 16),
                     90),
                 Effect = new DropShadowEffect
                 {
                     BlurRadius = 22,
                     ShadowDepth = 8,
                     Opacity = 0.35,
-                    Color = Colors.Black
+                    Color = WpfMedia.Colors.Black
                 }
             };
 
             var row = new StackPanel
             {
-                Orientation = Orientation.Horizontal,
+                Orientation = WpfControls.Orientation.Horizontal,
                 VerticalAlignment = VerticalAlignment.Center
             };
 
@@ -55,7 +56,7 @@ namespace ReWrite
                 Width = 9,
                 Height = 9,
                 CornerRadius = new CornerRadius(99),
-                Background = new SolidColorBrush(Color.FromRgb(168, 85, 247)),
+                Background = new WpfMedia.SolidColorBrush(WpfMedia.Color.FromRgb(168, 85, 247)),
                 Margin = new Thickness(0, 0, 9, 0),
                 VerticalAlignment = VerticalAlignment.Center
             };
@@ -63,7 +64,7 @@ namespace ReWrite
             _messageText = new TextBlock
             {
                 Text = "Translating...",
-                Foreground = new SolidColorBrush(Color.FromRgb(245, 243, 255)),
+                Foreground = new WpfMedia.SolidColorBrush(WpfMedia.Color.FromRgb(245, 243, 255)),
                 FontSize = 13,
                 FontWeight = FontWeights.SemiBold,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -80,8 +81,8 @@ namespace ReWrite
         public void SetMessage(string message, bool isError = false)
         {
             _messageText.Text = string.IsNullOrWhiteSpace(message) ? "Translating..." : message;
-            _messageText.Foreground = new SolidColorBrush(isError ? Color.FromRgb(254, 202, 202) : Color.FromRgb(245, 243, 255));
-            _dot.Background = new SolidColorBrush(isError ? Color.FromRgb(248, 113, 113) : Color.FromRgb(168, 85, 247));
+            _messageText.Foreground = new WpfMedia.SolidColorBrush(isError ? WpfMedia.Color.FromRgb(254, 202, 202) : WpfMedia.Color.FromRgb(245, 243, 255));
+            _dot.Background = new WpfMedia.SolidColorBrush(isError ? WpfMedia.Color.FromRgb(248, 113, 113) : WpfMedia.Color.FromRgb(168, 85, 247));
         }
 
         public void ShowNearCursor(string message, bool isError = false)
