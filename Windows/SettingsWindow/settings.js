@@ -1,6 +1,7 @@
 // State
-const DEFAULT_ROUTER_BASE_URL = "https://openrouter.ai/api/v1";
+const DEFAULT_ROUTER_BASE_URL = "http://localhost:20128/v1";
 const DEFAULT_ROUTER_MODELS = [
+    "cx-5.5-combo",
     "openai/gpt-4o-mini",
     "openai/gpt-4o",
     "anthropic/claude-3.5-sonnet",
@@ -24,7 +25,7 @@ let settings = {
     routerBaseUrl: DEFAULT_ROUTER_BASE_URL,
     routerModel: DEFAULT_ROUTER_MODELS[0],
     routerModels: [...DEFAULT_ROUTER_MODELS],
-    activeProvider: "gemini",
+    activeProvider: "router",
     quickTranslateAutoPaste: true,
     quickTranslateTargetLang: DEFAULT_QUICK_TRANSLATE_TARGET_LANG,
     autostart: true,
@@ -81,7 +82,7 @@ function normalizeSettings() {
     }
 
     if (!SUPPORTED_PROVIDERS.includes(settings.activeProvider)) {
-        settings.activeProvider = "gemini";
+        settings.activeProvider = "router";
     }
 
     settings.quickTranslateAutoPaste = settings.quickTranslateAutoPaste !== false;
@@ -140,7 +141,7 @@ function refreshAppSettings() {
     document.getElementById("router-key").value = settings.routerKey || "";
     document.getElementById("router-base-url").value = settings.routerBaseUrl || DEFAULT_ROUTER_BASE_URL;
     if (routerModelInput) routerModelInput.value = settings.routerModel || DEFAULT_ROUTER_MODELS[0];
-    document.getElementById("active-provider").value = settings.activeProvider || "gemini";
+    document.getElementById("active-provider").value = settings.activeProvider || "router";
     const localeSelect = document.getElementById('select-locale');
     if (localeSelect) localeSelect.value = settings.locale || 'en';
     if (quickTranslateAutoPasteInput) quickTranslateAutoPasteInput.checked = settings.quickTranslateAutoPaste !== false;
@@ -214,7 +215,7 @@ function syncSettingsFromForm() {
     settings.routerKey = valueOf("router-key");
     settings.routerBaseUrl = valueOf("router-base-url") || DEFAULT_ROUTER_BASE_URL;
     settings.routerModel = (routerModelInput && routerModelInput.value.trim()) || settings.routerModel || DEFAULT_ROUTER_MODELS[0];
-    settings.activeProvider = valueOf("active-provider") || settings.activeProvider || "gemini";
+    settings.activeProvider = valueOf("active-provider") || settings.activeProvider || "router";
     settings.quickTranslateAutoPaste = quickTranslateAutoPasteInput ? quickTranslateAutoPasteInput.checked : true;
     settings.quickTranslateTargetLang = (quickTranslateTargetLangInput && quickTranslateTargetLangInput.value) || settings.quickTranslateTargetLang || DEFAULT_QUICK_TRANSLATE_TARGET_LANG;
 
@@ -291,11 +292,11 @@ function getProviderLabel(provider) {
         openai: "OpenAI",
         router: "OpenRouter / 9router"
     };
-    return i18n[key] || fallback[provider] || fallback.gemini;
+    return i18n[key] || fallback[provider] || fallback.router;
 }
 
 function updateProviderUI() {
-    const provider = (activeProviderInput && activeProviderInput.value) || settings.activeProvider || "gemini";
+    const provider = (activeProviderInput && activeProviderInput.value) || settings.activeProvider || "router";
 
     if (geminiPanel) geminiPanel.style.display = provider === "gemini" ? "block" : "none";
     if (openaiPanel) openaiPanel.style.display = provider === "openai" ? "block" : "none";
@@ -650,7 +651,7 @@ function applyTranslations() {
 
     if (i18n['title.settings']) document.title = i18n['title.settings'];
     renderRouterModelList();
-    syncDropdownUI("provider", document.getElementById("active-provider")?.value || settings.activeProvider || "gemini");
+    syncDropdownUI("provider", document.getElementById("active-provider")?.value || settings.activeProvider || "router");
     syncDropdownUI("routerModel", document.getElementById("router-model")?.value || settings.routerModel || DEFAULT_ROUTER_MODELS[0]);
     syncDropdownUI("locale", document.getElementById("select-locale")?.value || settings.locale || "en");
     updateProviderUI();

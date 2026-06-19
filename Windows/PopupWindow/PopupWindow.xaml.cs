@@ -1,4 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,6 +18,10 @@ namespace ReWrite
     public partial class PopupWindow : Window
     {
         private Microsoft.Web.WebView2.Wpf.WebView2 webView;
+        private static readonly HttpClient AiHttpClient = new HttpClient
+        {
+            Timeout = TimeSpan.FromMinutes(5)
+        };
 
         private readonly MainWindow _parent;
         private IntPtr _targetHwnd = IntPtr.Zero;
@@ -206,6 +215,11 @@ namespace ReWrite
                     HideQuickTranslateStatus();
                     ShowPreparedQuickTranslatePopup();
                 }
+                else if (action == "ai_proxy_request")
+                {
+                    var request = AiProxyRequest.FromJson(doc.RootElement);
+                    _ = RunAiProxyRequestAsync(request);
+                }
                 else if (action == "start_drag")
                 {
                     try
@@ -228,6 +242,249 @@ namespace ReWrite
             {
                 System.Diagnostics.Debug.WriteLine($"Error parsing web message: {ex.Message}");
             }
+        }
+
+
+        // ── Native AI proxy ───────────────────────────────────────────────────────
+
+        private sealed class AiProxyRequest
+        {
+            public string RequestId { get; init; } = "";
+            public string Provider { get; init; } = "";
+            public string ApiKey { get; init; } = "";
+            public string Model { get; init; } = "";
+            public string BaseUrl { get; init; } = "";
+            public string Prompt { get; init; } = "";
+            public Dictionary<string, string> ExtraHeaders { get; init; } = new();
+
+            public static AiProxyRequest FromJson(JsonElement root)
+            {
+                var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                if (root.TryGetProperty("extraHeaders", out var extraHeaders) && extraHeaders.ValueKind == JsonValueKind.Object)
+                {
+                    foreach (var property in extraHeaders.EnumerateObject())
+                    {
+                        if (property.Value.ValueKind == JsonValueKind.String)
+                        {
+                            headers[property.Name] = property.Value.GetString() ?? "";
+                        }
+                    }
+                }
+
+                return new AiProxyRequest
+                {
+                    RequestId = root.TryGetProperty("requestId", out var requestId) ? requestId.GetString() ?? "" : "",
+                    Provider = root.TryGetProperty("provider", out var provider) ? provider.GetString() ?? "" : "",
+                    ApiKey = root.TryGetProperty("apiKey", out var apiKey) ? apiKey.GetString() ?? "" : "",
+                    Model = root.TryGetProperty("model", out var model) ? model.GetString() ?? "" : "",
+                    BaseUrl = root.TryGetProperty("baseUrl", out var baseUrl) ? baseUrl.GetString() ?? "" : "",
+                    Prompt = root.TryGetProperty("prompt", out var prompt) ? prompt.GetString() ?? "" : "",
+                    ExtraHeaders = headers
+                };
+            }
+        }
+
+        private async Task RunAiProxyRequestAsync(AiProxyRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.RequestId))
+                return;
+
+            try
+            {
+                PostWebEvent(new { @event = "ai_proxy_started", requestId = request.RequestId });
+
+                if (string.IsNullOrWhiteSpace(request.ApiKey))
+                    throw new InvalidOperationException(Localization.Get("quick_translate.error.failed") + " Missing API key.");
+                if (string.IsNullOrWhiteSpace(request.Model))
+                    throw new InvalidOperationException("Missing model name.");
+                if (string.IsNullOrWhiteSpace(request.Prompt))
+                    throw new InvalidOperationException("Missing prompt.");
+
+                if (string.Equals(request.Provider, "gemini", StringComparison.OrdinalIgnoreCase))
+                {
+                    await RunGeminiProxyRequestAsync(request);
+                    return;
+                }
+
+                using var httpRequest = new HttpRequestMessage(HttpMethod.Post, BuildChatCompletionsUrl(request.BaseUrl));
+                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", request.ApiKey);
+                foreach (var header in request.ExtraHeaders)
+                {
+                    if (!string.IsNullOrWhiteSpace(header.Key) && !string.IsNullOrWhiteSpace(header.Value))
+                    {
+                        httpRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                    }
+                }
+
+                var body = new
+                {
+                    model = request.Model,
+                    messages = new[]
+                    {
+                        new { role = "system", content = "You are a professional writing assistant. You MUST always write in the same language as the user's input text. Never translate or switch to another language unless explicitly asked to translate." },
+                        new { role = "user", content = request.Prompt }
+                    },
+                    stream = true,
+                    temperature = 0.3
+                };
+
+                httpRequest.Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
+
+                using var response = await AiHttpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorText = await response.Content.ReadAsStringAsync();
+                    throw new InvalidOperationException(ExtractOpenAiErrorMessage(errorText, $"HTTP {(int)response.StatusCode}"));
+                }
+
+                await using var stream = await response.Content.ReadAsStreamAsync();
+                using var reader = new StreamReader(stream, Encoding.UTF8);
+                while (!reader.EndOfStream)
+                {
+                    var line = await reader.ReadLineAsync();
+                    if (line == null) break;
+                    var trimmed = line.Trim();
+                    if (string.IsNullOrWhiteSpace(trimmed) || trimmed == "data: [DONE]") continue;
+                    if (!trimmed.StartsWith("data: ", StringComparison.Ordinal)) continue;
+
+                    var chunk = ExtractOpenAiChunkText(trimmed.Substring(6));
+                    if (!string.IsNullOrEmpty(chunk))
+                    {
+                        PostWebEvent(new { @event = "ai_proxy_chunk", requestId = request.RequestId, text = chunk });
+                    }
+                }
+
+                PostWebEvent(new { @event = "ai_proxy_done", requestId = request.RequestId });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"AI proxy request failed: {ex.Message}");
+                PostWebEvent(new { @event = "ai_proxy_error", requestId = request.RequestId, message = ex.Message });
+            }
+        }
+
+
+        private async Task RunGeminiProxyRequestAsync(AiProxyRequest request)
+        {
+            var model = request.Model.Trim();
+            if (model.StartsWith("models/", StringComparison.OrdinalIgnoreCase))
+                model = model.Substring("models/".Length);
+
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{Uri.EscapeDataString(model)}:generateContent?key={Uri.EscapeDataString(request.ApiKey)}";
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, url);
+
+            var body = new
+            {
+                system_instruction = new
+                {
+                    parts = new[]
+                    {
+                        new { text = "You are a professional writing assistant. You MUST always write in the same language as the user's input text. Never translate or switch to another language unless explicitly asked to translate." }
+                    }
+                },
+                contents = new[]
+                {
+                    new
+                    {
+                        parts = new[]
+                        {
+                            new { text = request.Prompt }
+                        }
+                    }
+                },
+                generationConfig = new { temperature = 0.3 }
+            };
+
+            httpRequest.Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
+            using var response = await AiHttpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseContentRead);
+            var responseText = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+                throw new InvalidOperationException(ExtractOpenAiErrorMessage(responseText, $"HTTP {(int)response.StatusCode}"));
+
+            var text = ExtractGeminiText(responseText);
+            if (!string.IsNullOrEmpty(text))
+                PostWebEvent(new { @event = "ai_proxy_chunk", requestId = request.RequestId, text });
+            PostWebEvent(new { @event = "ai_proxy_done", requestId = request.RequestId });
+        }
+
+        private static string ExtractGeminiText(string json)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                if (!doc.RootElement.TryGetProperty("candidates", out var candidates) || candidates.ValueKind != JsonValueKind.Array)
+                    return "";
+
+                var builder = new StringBuilder();
+                foreach (var candidate in candidates.EnumerateArray())
+                {
+                    if (!candidate.TryGetProperty("content", out var content)) continue;
+                    if (!content.TryGetProperty("parts", out var parts) || parts.ValueKind != JsonValueKind.Array) continue;
+                    foreach (var part in parts.EnumerateArray())
+                    {
+                        if (part.TryGetProperty("text", out var text)) builder.Append(text.GetString() ?? "");
+                    }
+                }
+                return builder.ToString();
+            }
+            catch { return ""; }
+        }
+
+        private void PostWebEvent(object payload)
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(payload);
+                System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    try { webView.CoreWebView2.PostWebMessageAsJson(json); } catch { }
+                }));
+            }
+            catch { }
+        }
+
+        private static string BuildChatCompletionsUrl(string baseUrl)
+        {
+            var clean = (baseUrl ?? "").Trim().TrimEnd('/');
+            if (string.IsNullOrWhiteSpace(clean)) clean = "http://localhost:20128/v1";
+            if (clean.EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase)) return clean;
+            return clean + "/chat/completions";
+        }
+
+        private static string ExtractOpenAiErrorMessage(string json, string fallback)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("error", out var error))
+                {
+                    if (error.ValueKind == JsonValueKind.Object && error.TryGetProperty("message", out var message))
+                        return message.GetString() ?? fallback;
+                    if (error.ValueKind == JsonValueKind.String)
+                        return error.GetString() ?? fallback;
+                }
+            }
+            catch { }
+            return string.IsNullOrWhiteSpace(json) ? fallback : json;
+        }
+
+        private static string ExtractOpenAiChunkText(string json)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+                if (!root.TryGetProperty("choices", out var choices) || choices.ValueKind != JsonValueKind.Array || choices.GetArrayLength() == 0)
+                    return "";
+                var choice = choices[0];
+                if (!choice.TryGetProperty("delta", out var delta))
+                    return "";
+                if (delta.TryGetProperty("content", out var content))
+                    return content.GetString() ?? "";
+            }
+            catch { }
+            return "";
         }
 
         // ── Messages to front-end ─────────────────────────────────────────────────

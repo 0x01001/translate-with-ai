@@ -98,25 +98,25 @@
             <div class="card">
                 <div class="section-title">
                     <strong data-i18n="settings.provider_section">AI Provider</strong>
-                    <span class="section-badge" id="active-provider-label">Gemini</span>
+                    <span class="section-badge" id="active-provider-label">OpenRouter / 9router</span>
                 </div>
 
                 <div class="field" style="padding-top:0">
                     <label data-i18n="settings.provider_label">Primary provider</label>
                     <div class="dropdown" data-dropdown="provider">
-                        <input type="hidden" id="active-provider" value="gemini">
+                        <input type="hidden" id="active-provider" value="router">
                         <button type="button" class="dropdown-trigger" id="active-provider-trigger" aria-haspopup="listbox" aria-expanded="false">
-                            <span class="dropdown-value" id="active-provider-text">Gemini (Google)</span>
+                            <span class="dropdown-value" id="active-provider-text">OpenRouter / 9router</span>
                             <span class="dropdown-chevron">▾</span>
                         </button>
                         <div class="dropdown-menu" id="active-provider-menu" role="listbox" aria-label="Provider options">
-                            <button type="button" class="dropdown-option" data-value="gemini" data-label-key="provider.gemini" aria-selected="true">
+                            <button type="button" class="dropdown-option" data-value="gemini" data-label-key="provider.gemini" aria-selected="false">
                                 <span data-i18n="provider.gemini">Gemini (Google)</span>
                             </button>
                             <button type="button" class="dropdown-option" data-value="openai" data-label-key="provider.openai" aria-selected="false">
                                 <span data-i18n="provider.openai">OpenAI</span>
                             </button>
-                            <button type="button" class="dropdown-option" data-value="router" data-label-key="provider.router" aria-selected="false">
+                            <button type="button" class="dropdown-option" data-value="router" data-label-key="provider.router" aria-selected="true">
                                 <span data-i18n="provider.router">OpenRouter / 9router</span>
                             </button>
                         </div>
@@ -125,7 +125,7 @@
 
                 <div class="hidden-note" data-i18n="settings.provider_hint">Only the selected provider's API key and model are shown.</div>
 
-                <div id="gemini-panel">
+                <div id="gemini-panel" style="display:none">
                     <div class="field">
                         <label for="gemini-key" data-i18n="settings.gemini_key_label">Gemini API Key</label>
                         <input type="password" id="gemini-key" placeholder="Nhập Gemini API key của bạn..." data-i18n-placeholder="settings.gemini_key_placeholder">
@@ -147,29 +147,29 @@
                     </div>
                 </div>
 
-                <div id="router-panel" style="display:none">
+                <div id="router-panel">
                     <div class="field">
                         <label for="router-key" data-i18n="settings.router_key_label">OpenRouter / 9router API Key</label>
                         <input type="password" id="router-key" placeholder="Nhập OpenRouter / 9router API key của bạn..." data-i18n-placeholder="settings.router_key_placeholder">
                     </div>
                     <div class="field">
                         <label for="router-base-url" data-i18n="settings.router_base_url_label">Base URL</label>
-                        <input type="text" id="router-base-url" value="https://openrouter.ai/api/v1" data-i18n-placeholder="settings.router_base_url_placeholder">
+                        <input type="text" id="router-base-url" value="http://localhost:20128/v1" data-i18n-placeholder="settings.router_base_url_placeholder">
                     </div>
                     <div class="field">
                         <label data-i18n="settings.router_model_label">Model Name</label>
                         <div>
                             <div class="dropdown" data-dropdown="router-model">
-                                <input type="hidden" id="router-model" value="openai/gpt-4o-mini">
+                                <input type="hidden" id="router-model" value="cx-5.5-combo">
                                 <button type="button" class="dropdown-trigger" id="router-model-trigger" aria-haspopup="listbox" aria-expanded="false">
-                                    <span class="dropdown-value" id="router-model-text">openai/gpt-4o-mini</span>
+                                    <span class="dropdown-value" id="router-model-text">cx-5.5-combo</span>
                                     <span class="dropdown-chevron">▾</span>
                                 </button>
                                 <div class="dropdown-menu" id="router-model-menu" role="listbox" aria-label="Router model options"></div>
                             </div>
                             <div class="hint" data-i18n="settings.router_model_hint" style="margin-left:0">Choose a saved model or add a custom OpenAI-compatible model id.</div>
                             <div class="model-add-row">
-                                <input type="text" id="router-model-add" placeholder="openai/gpt-4o-mini" data-i18n-placeholder="settings.router_add_model_placeholder">
+                                <input type="text" id="router-model-add" placeholder="cx-5.5-combo" data-i18n-placeholder="settings.router_add_model_placeholder">
                                 <button type="button" id="router-model-add-btn" class="btn secondary" data-i18n="settings.router_add_model">Add model</button>
                             </div>
                             <div id="router-model-list" class="model-list" aria-live="polite"></div>
