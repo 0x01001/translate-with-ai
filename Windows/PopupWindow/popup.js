@@ -10,8 +10,9 @@ let lastRequestMeta = null;
 let i18n = {};
 
 // Settings default structure (will load from localStorage)
-const DEFAULT_ROUTER_BASE_URL = "https://openrouter.ai/api/v1";
+const DEFAULT_ROUTER_BASE_URL = "http://localhost:20128/v1";
 const DEFAULT_ROUTER_MODELS = [
+    "cx-5.5-combo",
     "openai/gpt-4o-mini",
     "openai/gpt-4o",
     "anthropic/claude-3.5-sonnet",
@@ -23,14 +24,14 @@ const DEFAULT_QUICK_TRANSLATE_TARGET_LANG = "Tiếng Việt";
 
 let settings = {
     geminiKey: "",
-    geminiModel: "gemini-3.1-flash-lite",
+    geminiModel: "gemini-1.5-flash",
     openaiKey: "",
     openaiModel: "gpt-4o-mini",
     routerKey: "",
     routerBaseUrl: DEFAULT_ROUTER_BASE_URL,
     routerModel: DEFAULT_ROUTER_MODELS[0],
     routerModels: [...DEFAULT_ROUTER_MODELS],
-    activeProvider: "gemini",
+    activeProvider: "router",
     quickTranslateAutoPaste: true,
     quickTranslateTargetLang: DEFAULT_QUICK_TRANSLATE_TARGET_LANG
 };
@@ -59,6 +60,8 @@ const btnClearHistory = document.getElementById("btn-clear-history");
 let resizeAnimationFrame = null;
 let popupResizeObserver = null;
 const promptTemplates = window.ReWritePromptTemplates || {};
+const pendingAiProxyRequests = new Map();
+let aiProxyRequestSeq = 0;
 
 window.addEventListener("DOMContentLoaded", () => {
     if (window.chrome && window.chrome.webview) {
@@ -104,7 +107,7 @@ function normalizeSettings() {
     }
 
     if (!SUPPORTED_PROVIDERS.includes(settings.activeProvider)) {
-        settings.activeProvider = "gemini";
+        settings.activeProvider = "router";
     }
 
     settings.quickTranslateAutoPaste = settings.quickTranslateAutoPaste !== false;
@@ -413,6 +416,26 @@ if (window.chrome && window.chrome.webview) {
             return;
         }
 
+        if (data.event === "ai_proxy_started") {
+            handleNativeAiProxyStarted(data);
+            return;
+        }
+
+        if (data.event === "ai_proxy_chunk") {
+            handleNativeAiProxyChunk(data);
+            return;
+        }
+
+        if (data.event === "ai_proxy_done") {
+            handleNativeAiProxyDone(data);
+            return;
+        }
+
+        if (data.event === "ai_proxy_error") {
+            handleNativeAiProxyError(data);
+            return;
+        }
+
         if (data.event === "show") {
             selectedText = data.text ? data.text.trim() : "";
 
@@ -508,7 +531,7 @@ async function handleQuickTranslate(data) {
     } catch (error) {
         postToHost({
             action: "quick_translate_error",
-            message: error && error.message ? error.message : (i18n['quick_translate.error.failed'] || "Translation failed.")
+            message: getFriendlyProviderErrorMessage(error)
         });
     }
 }
@@ -632,7 +655,7 @@ async function startAIProcess() {
 
     } catch (error) {
         const tpl = i18n['popup.error.api_connection'] || 'Lỗi kết nối API: {0}<br>Vui lòng mở Cài đặt (từ khay hệ thống) để cấu hình API Key chính xác.';
-        const msg = tpl.replace('{0}', error.message || '');
+        const msg = tpl.replace('{0}', escapeHtml(getFriendlyProviderErrorMessage(error)));
         aiOutput.innerHTML = `<span class='text-rose-400'>${msg}</span>`;
     } finally {
         // Allow overflow and remove loading
@@ -686,6 +709,149 @@ function applyTranslations() {
     });
     requestPopupResize();
 }
+
+function getFriendlyProviderErrorMessage(error) {
+    const rawMessage = error && error.message ? String(error.message) : String(error || "");
+    const message = rawMessage.trim() || (i18n['quick_translate.error.failed'] || "Translation failed.");
+
+    if (/^(load failed|failed to fetch|networkerror)$/i.test(message) || /load failed|failed to fetch|networkerror/i.test(message)) {
+        return i18n['popup.error.load_failed_detail'] || "Network request failed before the AI server could respond. If you use 9router/local router, the old WebView request was likely blocked by CORS preflight. ReWrite now tries the native proxy first; please check that the local router is running, the Base URL is correct, and the API key is valid.";
+    }
+
+    if (/native_proxy_unavailable/i.test(message)) {
+        return i18n['popup.error.load_failed_detail'] || "Native AI proxy is unavailable in this build. Please rebuild/reopen ReWrite, or check your provider settings.";
+    }
+
+    return message;
+}
+
+function isLocalRouterBaseUrl(baseUrl) {
+    try {
+        const url = new URL(baseUrl);
+        const host = url.hostname.toLowerCase();
+        return host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0" || host === "::1";
+    } catch {
+        return false;
+    }
+}
+
+function getRouterExtraHeaders(baseUrl) {
+    // Local routers such as 9router often fail browser CORS preflight when extra
+    // non-simple headers are present. Native proxy does not need this, and the
+    // browser fallback should stay as simple as possible.
+    if (isLocalRouterBaseUrl(baseUrl)) return {};
+    return {
+        "HTTP-Referer": "https://rewrite.local",
+        "X-Title": "ReWrite"
+    };
+}
+
+function canUseNativeAiProxy() {
+    return !!(window.chrome && window.chrome.webview);
+}
+
+function handleNativeAiProxyStarted(data) {
+    const pending = pendingAiProxyRequests.get(data.requestId);
+    if (!pending) return;
+    pending.started = true;
+    clearTimeout(pending.unsupportedTimer);
+}
+
+function handleNativeAiProxyChunk(data) {
+    const pending = pendingAiProxyRequests.get(data.requestId);
+    if (!pending) return;
+    const text = data.text || "";
+    if (!text) return;
+    aiResult += text;
+    renderStreamingText(aiResult);
+}
+
+function handleNativeAiProxyDone(data) {
+    const pending = pendingAiProxyRequests.get(data.requestId);
+    if (!pending) return;
+    pendingAiProxyRequests.delete(data.requestId);
+    clearTimeout(pending.unsupportedTimer);
+    renderStreamingText(aiResult, true);
+    pending.resolve();
+}
+
+function handleNativeAiProxyError(data) {
+    const pending = pendingAiProxyRequests.get(data.requestId);
+    if (!pending) return;
+    pendingAiProxyRequests.delete(data.requestId);
+    clearTimeout(pending.unsupportedTimer);
+    pending.reject(new Error(data.message || (i18n['quick_translate.error.failed'] || "Translation failed.")));
+}
+
+async function streamOpenAICompatibleViaNative(prompt, { apiKey, model, baseUrl, extraHeaders = {} }) {
+    if (!canUseNativeAiProxy()) {
+        throw new Error("native_proxy_unavailable");
+    }
+
+    const requestId = `ai-${Date.now()}-${++aiProxyRequestSeq}`;
+
+    return new Promise((resolve, reject) => {
+        const unsupportedTimer = setTimeout(() => {
+            const pending = pendingAiProxyRequests.get(requestId);
+            if (!pending || pending.started) return;
+            pendingAiProxyRequests.delete(requestId);
+            reject(new Error("native_proxy_unavailable"));
+        }, 900);
+
+        pendingAiProxyRequests.set(requestId, {
+            started: false,
+            unsupportedTimer,
+            resolve,
+            reject
+        });
+
+        postToHost({
+            action: "ai_proxy_request",
+            requestId,
+            provider: "openai-compatible",
+            apiKey,
+            model,
+            baseUrl,
+            prompt,
+            extraHeaders
+        });
+    });
+}
+
+async function streamGeminiViaNative(prompt, { apiKey, model }) {
+    if (!canUseNativeAiProxy()) {
+        throw new Error("native_proxy_unavailable");
+    }
+
+    const requestId = `ai-${Date.now()}-${++aiProxyRequestSeq}`;
+
+    return new Promise((resolve, reject) => {
+        const unsupportedTimer = setTimeout(() => {
+            const pending = pendingAiProxyRequests.get(requestId);
+            if (!pending || pending.started) return;
+            pendingAiProxyRequests.delete(requestId);
+            reject(new Error("native_proxy_unavailable"));
+        }, 900);
+
+        pendingAiProxyRequests.set(requestId, {
+            started: false,
+            unsupportedTimer,
+            resolve,
+            reject
+        });
+
+        postToHost({
+            action: "ai_proxy_request",
+            requestId,
+            provider: "gemini",
+            apiKey,
+            model,
+            prompt,
+            extraHeaders: {}
+        });
+    });
+}
+
 // update document title if provided
 if (typeof applyTranslations === 'function') {
     const _oldApply = applyTranslations;
@@ -699,6 +865,16 @@ if (typeof applyTranslations === 'function') {
 async function streamGemini(prompt) {
     if (!settings.geminiKey) {
         throw new Error(i18n['popup.error.gemini_key_missing'] || "Chưa cấu hình Gemini API Key. Hãy cấu hình thông qua cửa sổ Cài đặt của ứng dụng.");
+    }
+
+    try {
+        await streamGeminiViaNative(prompt, { apiKey: settings.geminiKey, model: settings.geminiModel });
+        return;
+    } catch (error) {
+        if (!/native_proxy_unavailable/i.test(error && error.message ? error.message : String(error))) {
+            throw error;
+        }
+        console.warn("Native Gemini proxy unavailable, falling back to WebView fetch", error);
     }
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${settings.geminiModel}:streamGenerateContent?key=${settings.geminiKey}`;
@@ -821,14 +997,12 @@ async function streamRouter(prompt) {
         throw new Error(i18n['popup.error.router_key_missing'] || "Chưa cấu hình OpenRouter / 9router API Key. Hãy cấu hình trong Cài đặt.");
     }
 
+    const baseUrl = settings.routerBaseUrl || DEFAULT_ROUTER_BASE_URL;
     await streamOpenAICompatible(prompt, {
         apiKey: settings.routerKey,
         model: settings.routerModel,
-        baseUrl: settings.routerBaseUrl || DEFAULT_ROUTER_BASE_URL,
-        extraHeaders: {
-            "HTTP-Referer": "https://rewrite.local",
-            "X-Title": "ReWrite"
-        }
+        baseUrl,
+        extraHeaders: getRouterExtraHeaders(baseUrl)
     });
 }
 
@@ -840,6 +1014,16 @@ function buildChatCompletionsUrl(baseUrl) {
 }
 
 async function streamOpenAICompatible(prompt, { apiKey, model, baseUrl, extraHeaders = {} }) {
+    try {
+        await streamOpenAICompatibleViaNative(prompt, { apiKey, model, baseUrl, extraHeaders });
+        return;
+    } catch (error) {
+        if (!/native_proxy_unavailable/i.test(error && error.message ? error.message : String(error))) {
+            throw error;
+        }
+        console.warn("Native AI proxy unavailable, falling back to WebView fetch", error);
+    }
+
     const response = await fetch(buildChatCompletionsUrl(baseUrl), {
         method: "POST",
         headers: {

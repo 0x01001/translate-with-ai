@@ -126,5 +126,6 @@
   "quick_translate.loading": "翻訳中...",
   "quick_translate.error.no_selection": "選択されたテキストが見つかりません。テキストを選択してもう一度ホットキーを押してください。",
   "quick_translate.error.failed": "翻訳に失敗しました。プロバイダー設定を確認して再試行してください。",
-  "quick_translate.error.empty_result": "翻訳結果が空でした。貼り付けは行われませんでした。"
+  "quick_translate.error.empty_result": "翻訳結果が空でした。貼り付けは行われませんでした。",
+  "popup.error.load_failed_detail": "AI サーバーが応答する前にネットワークリクエストが失敗しました。9router/local router を使用している場合は、ローカルルーターが起動していること、Base URL が正しいこと、API キーが有効であることを確認してください。ReWrite は WebView の CORS 問題を避けるため native proxy を使用します。続く場合はアプリを再ビルド/再起動してください。"
 }

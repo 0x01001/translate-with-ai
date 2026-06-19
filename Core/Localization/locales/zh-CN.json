@@ -126,5 +126,6 @@
   "quick_translate.loading": "正在翻译...",
   "quick_translate.error.no_selection": "未找到选中的文本。请选择文本后再次按快捷键。",
   "quick_translate.error.failed": "翻译失败。请检查提供商设置后重试。",
-  "quick_translate.error.empty_result": "翻译结果为空，未粘贴任何内容。"
+  "quick_translate.error.empty_result": "翻译结果为空，未粘贴任何内容。",
+  "popup.error.load_failed_detail": "AI 服务器响应前网络请求失败。如果你使用 9router/local router，请确认本地路由器正在运行、Base URL 正确且 API key 有效。ReWrite 会使用 native proxy 避免 WebView CORS 问题；如果仍然发生，请重新构建/打开应用。"
 }

@@ -126,5 +126,6 @@
   "quick_translate.loading": "번역 중...",
   "quick_translate.error.no_selection": "선택된 텍스트를 찾을 수 없습니다. 텍스트를 선택한 뒤 단축키를 다시 누르세요.",
   "quick_translate.error.failed": "번역에 실패했습니다. 공급자 설정을 확인한 뒤 다시 시도하세요.",
-  "quick_translate.error.empty_result": "번역 결과가 비어 있습니다. 아무 내용도 붙여넣지 않았습니다."
+  "quick_translate.error.empty_result": "번역 결과가 비어 있습니다. 아무 내용도 붙여넣지 않았습니다.",
+  "popup.error.load_failed_detail": "AI 서버가 응답하기 전에 네트워크 요청이 실패했습니다. 9router/local router를 사용하는 경우 로컬 라우터가 실행 중인지, Base URL이 올바른지, API 키가 유효한지 확인하세요. ReWrite는 WebView CORS 문제를 피하기 위해 native proxy를 사용합니다. 계속 발생하면 앱을 다시 빌드/실행하세요."
 }

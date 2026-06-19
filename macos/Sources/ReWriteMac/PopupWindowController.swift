@@ -128,6 +128,8 @@ final class PopupWindowController: NSObject, WebViewBridgeDelegate, NSWindowDele
             quickStatusPanel.hide()
             positionNearMouse()
             panel.makeKeyAndOrderFront(nil)
+        case "ai_proxy_request":
+            runAiProxyRequest(payload)
         case "start_drag":
             if let event = NSApp.currentEvent {
                 panel.performDrag(with: event)
@@ -160,6 +162,212 @@ final class PopupWindowController: NSObject, WebViewBridgeDelegate, NSWindowDele
             guard let self, self.uiReady, self.panel.isVisible, !self.lastShowText.isEmpty else { return }
             self.pushShowMessage(self.lastShowText)
         }
+    }
+
+
+    // ── Native AI proxy ───────────────────────────────────────────────────────
+
+    private struct AiProxyRequest {
+        let requestId: String
+        let provider: String
+        let apiKey: String
+        let model: String
+        let baseUrl: String
+        let prompt: String
+        let extraHeaders: [String: String]
+
+        init?(_ payload: [String: Any]) {
+            requestId = payload["requestId"] as? String ?? ""
+            provider = payload["provider"] as? String ?? ""
+            apiKey = payload["apiKey"] as? String ?? ""
+            model = payload["model"] as? String ?? ""
+            baseUrl = payload["baseUrl"] as? String ?? ""
+            prompt = payload["prompt"] as? String ?? ""
+            extraHeaders = payload["extraHeaders"] as? [String: String] ?? [:]
+            if requestId.isEmpty { return nil }
+        }
+    }
+
+    private func runAiProxyRequest(_ payload: [String: Any]) {
+        guard let request = AiProxyRequest(payload) else { return }
+
+        Task { [weak self] in
+            await self?.performAiProxyRequest(request)
+        }
+    }
+
+    private func performAiProxyRequest(_ request: AiProxyRequest) async {
+        await postAiProxyEvent(["event": "ai_proxy_started", "requestId": request.requestId])
+
+        do {
+            if request.apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                throw AiProxyError.message(Localization.get("quick_translate.error.failed") + " Missing API key.")
+            }
+            if request.model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                throw AiProxyError.message("Missing model name.")
+            }
+            if request.prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                throw AiProxyError.message("Missing prompt.")
+            }
+
+            if request.provider.lowercased() == "gemini" {
+                try await performGeminiProxyRequest(request)
+                return
+            }
+
+            guard let url = URL(string: buildChatCompletionsUrl(request.baseUrl)) else {
+                throw AiProxyError.message("Invalid Base URL.")
+            }
+
+            var urlRequest = URLRequest(url: url)
+            urlRequest.httpMethod = "POST"
+            urlRequest.setValue("Bearer \(request.apiKey)", forHTTPHeaderField: "Authorization")
+            urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            for (key, value) in request.extraHeaders where !key.isEmpty && !value.isEmpty {
+                urlRequest.setValue(value, forHTTPHeaderField: key)
+            }
+
+            let body: [String: Any] = [
+                "model": request.model,
+                "messages": [
+                    [
+                        "role": "system",
+                        "content": "You are a professional writing assistant. You MUST always write in the same language as the user's input text. Never translate or switch to another language unless explicitly asked to translate."
+                    ],
+                    ["role": "user", "content": request.prompt]
+                ],
+                "stream": true,
+                "temperature": 0.3
+            ]
+            urlRequest.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+            let (bytes, response) = try await URLSession.shared.bytes(for: urlRequest)
+            if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+                var errorBody = ""
+                for try await line in bytes.lines {
+                    errorBody += line
+                    if errorBody.count > 16_384 { break }
+                }
+                throw AiProxyError.message(extractOpenAiErrorMessage(errorBody, fallback: "HTTP \(http.statusCode)"))
+            }
+
+            for try await line in bytes.lines {
+                let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+                if trimmed.isEmpty || trimmed == "data: [DONE]" { continue }
+                guard trimmed.hasPrefix("data: ") else { continue }
+                let json = String(trimmed.dropFirst(6))
+                let chunk = extractOpenAiChunkText(json)
+                if !chunk.isEmpty {
+                    await postAiProxyEvent(["event": "ai_proxy_chunk", "requestId": request.requestId, "text": chunk])
+                }
+            }
+
+            await postAiProxyEvent(["event": "ai_proxy_done", "requestId": request.requestId])
+        } catch {
+            NSLog("ReWrite: AI proxy request failed: \(error.localizedDescription)")
+            await postAiProxyEvent(["event": "ai_proxy_error", "requestId": request.requestId, "message": error.localizedDescription])
+        }
+    }
+
+
+    private func performGeminiProxyRequest(_ request: AiProxyRequest) async throws {
+        var model = request.model.trimmingCharacters(in: .whitespacesAndNewlines)
+        if model.lowercased().hasPrefix("models/") {
+            model = String(model.dropFirst("models/".count))
+        }
+
+        let escapedModel = model.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? model
+        let escapedKey = request.apiKey.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? request.apiKey
+        guard let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(escapedModel):generateContent?key=\(escapedKey)") else {
+            throw AiProxyError.message("Invalid Gemini model or API key.")
+        }
+
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body: [String: Any] = [
+            "system_instruction": [
+                "parts": [["text": "You are a professional writing assistant. You MUST always write in the same language as the user's input text. Never translate or switch to another language unless explicitly asked to translate."]]
+            ],
+            "contents": [["parts": [["text": request.prompt]]]],
+            "generationConfig": ["temperature": 0.3]
+        ]
+        urlRequest.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+            let errorBody = String(data: data, encoding: .utf8) ?? ""
+            throw AiProxyError.message(extractOpenAiErrorMessage(errorBody, fallback: "HTTP \(http.statusCode)"))
+        }
+
+        let text = extractGeminiText(data)
+        if !text.isEmpty {
+            await postAiProxyEvent(["event": "ai_proxy_chunk", "requestId": request.requestId, "text": text])
+        }
+        await postAiProxyEvent(["event": "ai_proxy_done", "requestId": request.requestId])
+    }
+
+    private func extractGeminiText(_ data: Data) -> String {
+        guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let candidates = object["candidates"] as? [[String: Any]]
+        else { return "" }
+
+        var result = ""
+        for candidate in candidates {
+            guard let content = candidate["content"] as? [String: Any],
+                  let parts = content["parts"] as? [[String: Any]]
+            else { continue }
+            for part in parts {
+                result += part["text"] as? String ?? ""
+            }
+        }
+        return result
+    }
+
+    @MainActor
+    private func postAiProxyEvent(_ payload: [String: Any]) {
+        bridge.postEvent(payload)
+    }
+
+    private enum AiProxyError: LocalizedError {
+        case message(String)
+        var errorDescription: String? {
+            switch self {
+            case .message(let text): return text
+            }
+        }
+    }
+
+    private func buildChatCompletionsUrl(_ baseUrl: String) -> String {
+        var clean = baseUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        while clean.hasSuffix("/") { clean.removeLast() }
+        if clean.isEmpty { clean = "http://localhost:20128/v1" }
+        if clean.lowercased().hasSuffix("/chat/completions") { return clean }
+        return clean + "/chat/completions"
+    }
+
+    private func extractOpenAiErrorMessage(_ json: String, fallback: String) -> String {
+        guard let data = json.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return json.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? fallback : json }
+
+        if let error = object["error"] as? [String: Any], let message = error["message"] as? String {
+            return message
+        }
+        if let error = object["error"] as? String {
+            return error
+        }
+        return fallback
+    }
+
+    private func extractOpenAiChunkText(_ json: String) -> String {
+        guard let data = json.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let choices = object["choices"] as? [[String: Any]],
+              let first = choices.first,
+              let delta = first["delta"] as? [String: Any]
+        else { return "" }
+        return delta["content"] as? String ?? ""
     }
 
     // ── Paste back into the target app ────────────────────────────────────────
