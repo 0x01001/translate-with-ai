@@ -125,6 +125,8 @@
   "settings.quick_translate_auto_paste_hint": "Turn off to show the popup result first instead of replacing text automatically.",
   "quick_translate.loading": "Translating...",
   "quick_translate.error.no_selection": "No selected text found. Select text and press the hotkey again.",
+  "quick_translate.error.accessibility_required": "ReWrite needs Accessibility permission to copy selected text. Enable it in System Settings → Privacy & Security → Accessibility, then reopen ReWrite.",
+  "quick_translate.error.copy_failed": "Could not copy the selected text. Make sure ReWrite is allowed in Accessibility, run it from /Applications, and try again in a selectable text field.",
   "quick_translate.error.failed": "Translation failed. Please check your provider settings and try again.",
   "quick_translate.error.empty_result": "The translation result was empty. Nothing was pasted.",
   "popup.error.load_failed_detail": "Network request failed before the AI server could respond. If you use 9router/local router, make sure the local router is running, the Base URL is correct, and the API key is valid. ReWrite uses a native proxy to avoid WebView CORS issues; rebuild/reopen the app if this keeps happening."

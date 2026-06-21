@@ -90,35 +90,102 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // ── Hotkey handler: capture selection, quick translate ─────────────────────
 
+    private struct SelectionCaptureResult {
+        let text: String
+        let errorMessage: String?
+    }
+
     private func hotKeyPressed() {
         // Remember the app that has focus before our panel appears.
         let targetApp = NSWorkspace.shared.frontmostApplication
-        NSLog("ReWrite: hotkey fired, target=\(targetApp?.localizedName ?? "none") accessibilityTrusted=\(AccessibilityPermission.isTrusted)")
+        let bundlePath = Bundle.main.bundleURL.path
+        let isTranslocated = bundlePath.contains("/AppTranslocation/")
+        NSLog(
+            "ReWrite: hotkey fired, target=\(describe(targetApp)) accessibilityTrusted=\(AccessibilityPermission.isTrusted) translocated=\(isTranslocated) bundle=\(bundlePath)"
+        )
 
         Task { @MainActor in
-            let originalClipboard = Pasteboard.readString()
+            let result = await self.captureSelectedText(from: targetApp, appWasTranslocated: isTranslocated)
+            if let errorMessage = result.errorMessage {
+                self.popupController.showQuickTranslateError(errorMessage)
+                return
+            }
 
-            Pasteboard.clear()
-            let baseline = Pasteboard.changeCount
-            await KeyboardSimulator.simulateCopy()
+            self.popupController.quickTranslate(text: result.text, target: targetApp)
+        }
+    }
 
-            // Wait up to 250 ms for the target app to populate the pasteboard.
-            var selectedText = ""
-            for _ in 0..<10 {
-                if Pasteboard.changeCount > baseline, let text = Pasteboard.readString() {
+    @MainActor
+    private func captureSelectedText(from targetApp: NSRunningApplication?, appWasTranslocated: Bool) async -> SelectionCaptureResult {
+        guard AccessibilityPermission.isTrusted else {
+            NSLog("ReWrite: selection capture blocked because Accessibility permission is not trusted")
+            AccessibilityPermission.promptIfNeeded()
+            return SelectionCaptureResult(
+                text: "",
+                errorMessage: Localization.get("quick_translate.error.accessibility_required")
+            )
+        }
+
+        // The hotkey fires while the physical modifier keys may still be down.
+        // Wait before touching the pasteboard so a slow key release does not
+        // leave the user's clipboard empty while we wait.
+        let modifiersReleased = await KeyboardSimulator.waitForModifierRelease()
+        if !modifiersReleased {
+            NSLog("ReWrite: selection capture continuing before all hotkey modifiers were released")
+        }
+
+        // Carbon global hotkeys normally leave focus in the target app, but make
+        // that explicit before sending Cmd+C. This mirrors the paste-back path.
+        targetApp?.activate(options: [])
+        await KeyboardSimulator.sleep(ms: 60)
+
+        let originalClipboard = Pasteboard.snapshot()
+        Pasteboard.clear()
+        let baselineChangeCount = Pasteboard.changeCount
+        _ = await KeyboardSimulator.simulateCopy(waitForModifiers: false)
+
+        var selectedText = ""
+        var latestChangeCount = Pasteboard.changeCount
+        var sawPasteboardChange = latestChangeCount > baselineChangeCount
+
+        // Wait up to 250 ms for the target app to populate the pasteboard.
+        for _ in 0..<10 {
+            latestChangeCount = Pasteboard.changeCount
+            if latestChangeCount > baselineChangeCount {
+                sawPasteboardChange = true
+                if let text = Pasteboard.readString(), !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     selectedText = text
                     break
                 }
-                await KeyboardSimulator.sleep(ms: 25)
             }
-
-            // Restore the user's clipboard so we don't pollute their history.
-            if let originalClipboard {
-                Pasteboard.write(originalClipboard)
-            }
-
-            self.popupController.quickTranslate(text: selectedText, target: targetApp)
+            await KeyboardSimulator.sleep(ms: 25)
         }
+
+        // Restore the user's clipboard exactly as best as NSPasteboard allows.
+        Pasteboard.restore(originalClipboard)
+
+        let trimmed = selectedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            NSLog(
+                "ReWrite: selection capture failed, target=\(describe(targetApp)) modifiersReleased=\(modifiersReleased) baseline=\(baselineChangeCount) latest=\(latestChangeCount) sawPasteboardChange=\(sawPasteboardChange) translocated=\(appWasTranslocated)"
+            )
+            return SelectionCaptureResult(
+                text: "",
+                errorMessage: Localization.get("quick_translate.error.copy_failed")
+            )
+        }
+
+        NSLog(
+            "ReWrite: selection capture succeeded, target=\(describe(targetApp)) length=\(trimmed.count) baseline=\(baselineChangeCount) latest=\(latestChangeCount)"
+        )
+        return SelectionCaptureResult(text: selectedText, errorMessage: nil)
+    }
+
+    private func describe(_ app: NSRunningApplication?) -> String {
+        guard let app else { return "none" }
+        let name = app.localizedName ?? "unknown"
+        let bundleID = app.bundleIdentifier ?? "no-bundle-id"
+        return "\(name) [\(bundleID)]"
     }
 
     // ── First run ─────────────────────────────────────────────────────────────

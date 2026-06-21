@@ -125,6 +125,8 @@
   "settings.quick_translate_auto_paste_hint": "关闭后会先在弹窗中显示结果，而不是自动替换文本。",
   "quick_translate.loading": "正在翻译...",
   "quick_translate.error.no_selection": "未找到选中的文本。请选择文本后再次按快捷键。",
+  "quick_translate.error.accessibility_required": "ReWrite 需要“辅助功能”权限才能复制选中的文本。请在系统设置 → 隐私与安全性 → 辅助功能中启用，然后重新打开 ReWrite。",
+  "quick_translate.error.copy_failed": "无法复制选中的文本。请确认 ReWrite 已获得辅助功能权限、从 /Applications 运行，并在可选择的文本区域中重试。",
   "quick_translate.error.failed": "翻译失败。请检查提供商设置后重试。",
   "quick_translate.error.empty_result": "翻译结果为空，未粘贴任何内容。",
   "popup.error.load_failed_detail": "AI 服务器响应前网络请求失败。如果你使用 9router/local router，请确认本地路由器正在运行、Base URL 正确且 API key 有效。ReWrite 会使用 native proxy 避免 WebView CORS 问题；如果仍然发生，请重新构建/打开应用。"

@@ -125,6 +125,8 @@
   "settings.quick_translate_auto_paste_hint": "Tắt tùy chọn này nếu muốn xem kết quả trong popup trước khi thay thế.",
   "quick_translate.loading": "Đang dịch...",
   "quick_translate.error.no_selection": "Không tìm thấy văn bản đã bôi đen. Hãy chọn văn bản và nhấn phím tắt lại.",
+  "quick_translate.error.accessibility_required": "ReWrite cần quyền Trợ năng (Accessibility) để copy văn bản đã bôi đen. Hãy bật trong System Settings → Privacy & Security → Accessibility, rồi mở lại ReWrite.",
+  "quick_translate.error.copy_failed": "Không copy được văn bản đã bôi đen. Hãy kiểm tra ReWrite đã được bật quyền Accessibility, chạy app từ /Applications, rồi thử lại trong ô văn bản có thể chọn.",
   "quick_translate.error.failed": "Dịch thất bại. Vui lòng kiểm tra cấu hình provider và thử lại.",
   "quick_translate.error.empty_result": "Kết quả dịch trống. Không có nội dung nào được dán.",
   "popup.error.load_failed_detail": "Kết nối mạng thất bại trước khi máy chủ AI phản hồi. Nếu bạn dùng 9router/local router, hãy kiểm tra router đang chạy, Base URL đúng và API key hợp lệ. ReWrite dùng native proxy để tránh lỗi CORS của WebView; hãy build/mở lại app nếu lỗi vẫn tiếp diễn."

@@ -411,7 +411,7 @@ final class PopupWindowController: NSObject, WebViewBridgeDelegate, NSWindowDele
         }
     }
 
-    private func showQuickTranslateError(_ message: String) {
+    func showQuickTranslateError(_ message: String) {
         quickStatusPanel.showError(message: message.isEmpty ? Localization.get("quick_translate.error.failed") : message)
     }
 

@@ -125,6 +125,8 @@
   "settings.quick_translate_auto_paste_hint": "Deaktivieren, um das Ergebnis zuerst im Popup anzuzeigen statt Text automatisch zu ersetzen.",
   "quick_translate.loading": "Übersetzen...",
   "quick_translate.error.no_selection": "Kein ausgewählter Text gefunden. Text markieren und den Hotkey erneut drücken.",
+  "quick_translate.error.accessibility_required": "ReWrite benötigt die Bedienungshilfen-Berechtigung, um markierten Text zu kopieren. Aktivieren Sie sie unter Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen und öffnen Sie ReWrite erneut.",
+  "quick_translate.error.copy_failed": "Der markierte Text konnte nicht kopiert werden. Prüfen Sie die Bedienungshilfen-Berechtigung, starten Sie ReWrite aus /Applications und versuchen Sie es in einem auswählbaren Textfeld erneut.",
   "quick_translate.error.failed": "Übersetzung fehlgeschlagen. Bitte Provider-Einstellungen prüfen und erneut versuchen.",
   "quick_translate.error.empty_result": "Das Übersetzungsergebnis war leer. Es wurde nichts eingefügt.",
   "popup.error.load_failed_detail": "Die Netzwerkanfrage ist fehlgeschlagen, bevor der AI-Server antworten konnte. Wenn Sie 9router/local router verwenden, prüfen Sie bitte, ob der lokale Router läuft, die Base URL korrekt ist und der API-Schlüssel gültig ist. ReWrite nutzt einen nativen Proxy, um WebView-CORS-Probleme zu vermeiden; bitte bauen/öffnen Sie die App erneut, falls dies weiterhin passiert."

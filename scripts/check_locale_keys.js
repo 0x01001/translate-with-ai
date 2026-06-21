@@ -5,7 +5,7 @@ const path = require("path");
 const repoRoot = path.resolve(__dirname, "..");
 const localeDir = path.join(repoRoot, "Core", "Localization", "locales");
 const enPath = path.join(localeDir, "en.json");
-const scanExts = new Set([".cs", ".html", ".js"]);
+const scanExts = new Set([".cs", ".html", ".js", ".swift"]);
 const ignoreDirs = new Set([".git", "bin", "obj", "node_modules"]);
 const args = new Set(process.argv.slice(2));
 const scaffold = args.has("--scaffold");
@@ -40,7 +40,7 @@ function extractKeys(text) {
   };
 
   const patterns = [
-    { name: "Localization.Get", regex: /Localization\.Get\(\s*["'`]([^"'`]+)["'`]\s*\)/g },
+    { name: "Localization.Get/get", regex: /Localization\.(?:Get|get)\(\s*["'`]([^"'`]+)["'`]\s*\)/g },
     { name: "data-i18n", regex: /data-i18n(?:-placeholder)?\s*=\s*["']([^"']+)["']/g },
     { name: "i18n lookup", regex: /i18n\[\s*["']([^"']+)["']\s*\]/g }
   ];

@@ -125,6 +125,8 @@
   "settings.quick_translate_auto_paste_hint": "Désactivez cette option pour afficher d'abord le résultat dans la fenêtre contextuelle.",
   "quick_translate.loading": "Traduction...",
   "quick_translate.error.no_selection": "Aucun texte sélectionné. Sélectionnez du texte puis appuyez de nouveau sur le raccourci.",
+  "quick_translate.error.accessibility_required": "ReWrite a besoin de l’autorisation Accessibilité pour copier le texte sélectionné. Activez-la dans Réglages Système → Confidentialité et sécurité → Accessibilité, puis rouvrez ReWrite.",
+  "quick_translate.error.copy_failed": "Impossible de copier le texte sélectionné. Vérifiez que ReWrite est autorisé dans Accessibilité, lancez-le depuis /Applications, puis réessayez dans un champ de texte sélectionnable.",
   "quick_translate.error.failed": "La traduction a échoué. Vérifiez les paramètres du fournisseur et réessayez.",
   "quick_translate.error.empty_result": "Le résultat de traduction est vide. Aucun contenu n'a été collé.",
   "popup.error.load_failed_detail": "La requête réseau a échoué avant que le serveur IA ne réponde. Si vous utilisez 9router/local router, vérifiez que le routeur local fonctionne, que la Base URL est correcte et que la clé API est valide. ReWrite utilise un proxy natif pour éviter les problèmes CORS de WebView ; reconstruisez/rouvrez l’app si cela persiste."

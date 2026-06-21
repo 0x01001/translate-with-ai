@@ -125,6 +125,8 @@
   "settings.quick_translate_auto_paste_hint": "關閉後會先在彈窗中顯示結果，而不是自動取代文字。",
   "quick_translate.loading": "正在翻譯...",
   "quick_translate.error.no_selection": "找不到選取的文字。請選取文字後再次按快捷鍵。",
+  "quick_translate.error.accessibility_required": "ReWrite 需要「輔助使用」權限才能複製選取的文字。請在系統設定 → 隱私權與安全性 → 輔助使用中啟用，然後重新開啟 ReWrite。",
+  "quick_translate.error.copy_failed": "無法複製選取的文字。請確認 ReWrite 已允許輔助使用、從 /Applications 執行，並在可選取文字的欄位中重試。",
   "quick_translate.error.failed": "翻譯失敗。請檢查提供者設定後再試一次。",
   "quick_translate.error.empty_result": "翻譯結果為空，未貼上任何內容。",
   "popup.error.load_failed_detail": "AI 伺服器回應前網路請求失敗。如果你使用 9router/local router，請確認本機路由器正在執行、Base URL 正確且 API key 有效。ReWrite 會使用 native proxy 避免 WebView CORS 問題；如果仍然發生，請重新建置/開啟應用。"
